@@ -13,7 +13,6 @@ export default function Home() {
       <CoursesSection />
       <TeachersSection />
       <ContactSection />
-      <Footer />
     </div>
   );
 }

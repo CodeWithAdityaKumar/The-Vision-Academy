@@ -24,7 +24,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md">
+    <nav className="border-b-2 border-gray-500 bg-white dark:bg-gray-800 ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -35,13 +35,13 @@ export default function Navigation() {
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">HOME</Link>
-            <Link href="/courses" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">COURSES</Link>
-            <Link href="/live-classes" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">LIVE CLASSES</Link>
-            <Link href="/teachers" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">TEACHERS</Link>
-            <Link href="/notes-books" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">NOTES/BOOKS</Link>
-            <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">ABOUT</Link>
-            <Link href="/contact" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">CONTACT</Link>
-            <Link href="/login" className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">LOG IN</Link>
+            <Link href="/pages/courses" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">COURSES</Link>
+            <Link href="/pages/live-classes" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">LIVE CLASSES</Link>
+            <Link href="/pages/teachers" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">TEACHERS</Link>
+            <Link href="/pages/notes-books" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">NOTES/BOOKS</Link>
+            <Link href="/pages/about" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">ABOUT</Link>
+            <Link href="/pages/contact" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">CONTACT</Link>
+            <Link href="/pages/account/login" className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium">LOG IN</Link>
             <button
               onClick={toggleTheme}
               className="text-gray-700 dark:text-gray-300 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
