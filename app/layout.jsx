@@ -8,13 +8,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Navigation />
-          <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <Navigation />
             {children}
-          </AuthProvider>
-          <Footer />
-        </ThemeProvider>
+            <Footer />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

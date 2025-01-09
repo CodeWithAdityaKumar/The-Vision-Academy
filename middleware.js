@@ -9,6 +9,8 @@ export async function middleware(request) {
   const protectedPaths = [
     '/pages/live-classes',
     '/pages/live-classes/',
+    '/pages/notes-books',
+    '/pages/notes-books/',
   ];
 
   if (protectedPaths.some(route => path.startsWith(route)) && !token) {
@@ -21,5 +23,6 @@ export async function middleware(request) {
 export const config = {
   matcher: [
     '/pages/live-classes/:path*',
+    '/pages/notes-books/:path*',
   ],
 };

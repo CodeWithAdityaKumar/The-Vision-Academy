@@ -4,13 +4,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Transition } from '@headlessui/react';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/components/AuthProvider';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
 
-  // Only run after mount to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -19,7 +24,15 @@ export default function Navigation() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  // Don't render theme toggle until mounted to avoid hydration mismatch
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (!mounted) {
     return null;
   }
@@ -42,7 +55,21 @@ export default function Navigation() {
             <Link href="/pages/notes-books" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">NOTES/BOOKS</Link>
             <Link href="/pages/about" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">ABOUT</Link>
             <Link href="/pages/contact" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">CONTACT</Link>
-            <Link href="/pages/account/login" className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium">LOG IN</Link>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                LOG OUT
+              </button>
+            ) : (
+              <Link 
+                href="/pages/account/login" 
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                LOG IN
+              </Link>
+            )}
             <div className="flex items-center">
               <button
                 onClick={toggleTheme}
@@ -141,7 +168,21 @@ export default function Navigation() {
               <Link href="/pages/notes-books" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">NOTES/BOOKS</Link>
               <Link href="/pages/about" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">ABOUT</Link>
               <Link href="/pages/contact" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">CONTACT</Link>
-              <Link href="/pages/account/login" className="bg-blue-600 text-white hover:bg-blue-700 block px-3 py-2 rounded-md text-base font-medium">LOG IN</Link>
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                >
+                  LOG OUT
+                </button>
+              ) : (
+                <Link
+                  href="/pages/account/login"
+                  className="block bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
+                >
+                  LOG IN
+                </Link>
+              )}
             </div>
           </div>
         )}
