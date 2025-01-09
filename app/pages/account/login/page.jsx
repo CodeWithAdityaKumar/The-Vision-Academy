@@ -1,9 +1,9 @@
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -14,6 +14,18 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, redirect to dashboard
+        router.push('/pages/account/dashboard');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -27,9 +39,28 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      router.push('/'); // Redirect to home page after successful login
+      router.push('/pages/account/dashboard'); // Redirect to home page after successful login
     } catch (error) {
       setError('Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!formData.email) {
+      setError('Please enter your email address to reset password');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, formData.email);
+      setResetSent(true);
+      setError('');
+    } catch (error) {
+      setError('Error sending reset email. Please check your email address.');
     } finally {
       setLoading(false);
     }
@@ -58,6 +89,12 @@ export default function LoginPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="bg-white dark:bg-gray-800 py-8 px-4 shadow-md rounded-lg sm:px-10"
         >
+          {resetSent ? (
+            <div className="text-green-500 text-sm text-center mb-4">
+              Password reset email has been sent. Please check your inbox.
+            </div>
+          ) : null}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="text-red-500 text-sm text-center">
@@ -115,9 +152,12 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <Link href="/account/forgot-password" className="font-medium text-red-600 hover:text-red-500">
+                <button
+                  onClick={handleForgotPassword}
+                  className="font-medium text-red-600 hover:text-red-500"
+                >
                   Forgot your password?
-                </Link>
+                </button>
               </div>
             </div>
 

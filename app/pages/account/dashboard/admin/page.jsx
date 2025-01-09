@@ -63,8 +63,8 @@ export default function AdminDashboard() {
 
     return () => {
       unsubscribe();
-      const teachersRef = ref(database, 'teachers');
-      const studentsRef = ref(database, 'students');
+      const teachersRef = ref(database, 'users');
+      const studentsRef = ref(database, 'users');
       off(teachersRef);
       off(studentsRef);
     };
