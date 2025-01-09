@@ -7,10 +7,11 @@ import { database, auth } from '@/lib/firebase';
 import { ref, onValue, off } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function LiveClassesSection() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveClasses, setLiveClasses] = useState([]);
@@ -18,18 +19,11 @@ export default function LiveClassesSection() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        router.push('/login');
-      } else {
-        setUser(currentUser);
-      }
-    });
+    if (!user) {
+      router.push('/pages/account/login');
+      return;
+    }
 
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
     const liveClassesRef = ref(database, 'liveClasses');
     
     const handleData = (snapshot) => {
@@ -37,7 +31,6 @@ export default function LiveClassesSection() {
       try {
         const data = snapshot.val();
         if (data) {
-          // Convert object to array and add ID to each item
           const classesArray = Object.entries(data).map(([id, values]) => ({
             id,
             ...values,
@@ -54,16 +47,14 @@ export default function LiveClassesSection() {
       }
     };
 
-    // Set up realtime listener
     onValue(liveClassesRef, handleData, (err) => {
       setError('Failed to load live classes');
       console.error('Error setting up live classes listener:', err);
       setLoading(false);
     });
 
-    // Cleanup listener on unmount
     return () => off(liveClassesRef);
-  }, []);
+  }, [user, router]);
 
   const filteredClasses = liveClasses.filter(classItem => {
     const matchesFilter = filter === 'all' || classItem.status === filter;

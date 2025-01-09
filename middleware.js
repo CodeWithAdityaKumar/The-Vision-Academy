@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
 export async function middleware(request) {
-  // Get the user's session token from cookies
-  const token = request.cookies.get('session');
+  // Get the Firebase auth token from cookies
+  const token = request.cookies.get('firebase-token');
+  const path = request.nextUrl.pathname;
 
   // Protected routes
   const protectedPaths = [
@@ -11,7 +11,7 @@ export async function middleware(request) {
     '/pages/live-classes/',
   ];
 
-  if (protectedPaths.includes(request.nextUrl.pathname) && !token) {
+  if (protectedPaths.some(route => path.startsWith(route)) && !token) {
     return NextResponse.redirect(new URL('/pages/account/login', request.url));
   }
 
