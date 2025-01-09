@@ -8,11 +8,6 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'fire
 import { storage } from '@/lib/firebase';
 import {sendEmailVerification, createUserWithEmailAndPassword} from 'firebase/auth';
 
-
-
-
-
-
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('teachers');
@@ -26,8 +21,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     isVerified: 'all',
-    subject: 'all',
-    class: 'all',
+    subject: 'all', 
+    class: 'all'
   });
   const [formData, setFormData] = useState({
     name: '',
@@ -42,7 +37,7 @@ export default function AdminDashboard() {
     socialLinks: {
       facebook: '',
       instagram: '',
-      linkedin: '',
+      linkedin: ''
     }
   });
   const [emailVerificationStatus, setEmailVerificationStatus] = useState({});
@@ -53,14 +48,12 @@ export default function AdminDashboard() {
       if (!user || user.email !== 'ak6414119@gmail.com') {
         router.push('/pages/account/login');
       } else {
-        // Set up realtime listeners
         setupRealtimeListeners();
       }
     });
 
     return () => {
       unsubscribe();
-      // Clean up realtime listeners
       const teachersRef = ref(database, 'teachers');
       const studentsRef = ref(database, 'students');
       off(teachersRef);
@@ -78,7 +71,6 @@ export default function AdminDashboard() {
       if (data) {
         const teachersArray = await Promise.all(
           Object.entries(data).map(async ([id, values]) => {
-            // Force refresh verification status
             if (auth.currentUser?.email === values.email) {
               await auth.currentUser.reload();
             }
@@ -99,14 +91,13 @@ export default function AdminDashboard() {
       setLoading(false);
     });
 
-    // Similar update for students data
+    // Listen for students data
     const studentsRef = ref(database, 'students');
     onValue(studentsRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const studentsArray = await Promise.all(
           Object.entries(data).map(async ([id, values]) => {
-            // Force refresh verification status
             if (auth.currentUser?.email === values.email) {
               await auth.currentUser.reload();
             }
@@ -187,7 +178,7 @@ export default function AdminDashboard() {
       socialLinks: {
         facebook: '',
         instagram: '',
-        linkedin: '',
+        linkedin: ''
       }
     });
     setSelectedItem(null);
@@ -240,15 +231,12 @@ export default function AdminDashboard() {
 
   const sendVerificationEmail = async (email) => {
     try {
-      // Create a temporary user account if it doesn't exist
       let userCredential;
       try {
         const tempPassword = generateTempPassword();
         userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
-
       } catch (error) {
         if (error.code === 'auth/email-already-in-use') {
-          // If user exists, we can't send verification without their password
           setError('User already exists. Ask them to verify through their account.');
           return;
         } else {
@@ -256,7 +244,6 @@ export default function AdminDashboard() {
         }
       }
 
-      // Send verification email
       await sendEmailVerification(userCredential.user);
       alert('Verification email sent successfully!');
 
@@ -270,12 +257,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // Helper function to generate a temporary password
   const generateTempPassword = () => {
     return Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
   };
 
-  // Add useEffect to refresh verification status periodically
   useEffect(() => {
     const refreshVerificationStatus = async () => {
       if (auth.currentUser) {
@@ -284,10 +269,8 @@ export default function AdminDashboard() {
       }
     };
 
-    // Initial check
     refreshVerificationStatus();
 
-    // Set up interval to check periodically
     const interval = setInterval(refreshVerificationStatus, 5000);
 
     return () => clearInterval(interval);
@@ -295,8 +278,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-
-
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -371,7 +352,6 @@ export default function AdminDashboard() {
                 <option value="Mathematics">Mathematics</option>
                 <option value="Physics">Physics</option>
                 <option value="Chemistry">Chemistry</option>
-                {/* Add more subjects as needed */}
               </select>
             ) : (
               <select
@@ -383,7 +363,6 @@ export default function AdminDashboard() {
                 <option value="Class 6">Class 6</option>
                 <option value="Class 7">Class 7</option>
                 <option value="Class 8">Class 8</option>
-                {/* Add more classes as needed */}
               </select>
             )}
           </div>
@@ -467,14 +446,6 @@ export default function AdminDashboard() {
                               ? 'Verified' 
                               : 'Not Verified'}
                           </span>
-                          {/* {item.email === auth.currentUser?.email && !auth.currentUser?.emailVerified && (
-                            // <button
-                            //   onClick={() => sendVerificationEmail(item.email)}
-                            //   className="text-sm text-red-600 hover:text-red-500 underline"
-                            // >
-                            //   Send Verification
-                            // </button>
-                          )} */}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -502,7 +473,6 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <motion.div
@@ -525,7 +495,6 @@ export default function AdminDashboard() {
             </div>
 
             <form onSubmit={modalMode === 'add' ? handleAdd : handleUpdate} className="space-y-6">
-              {/* Profile Photo Upload Section */}
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
                   <img
@@ -552,7 +521,6 @@ export default function AdminDashboard() {
                 {loading && <p className="text-sm text-gray-500">Uploading image...</p>}
               </div>
 
-              {/* Form Fields with better spacing and organization */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
@@ -632,7 +600,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Social Media Links Section */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Social Media Links</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -674,7 +641,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Email Verification Status */}
               <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="flex items-center space-x-2">
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -687,18 +653,8 @@ export default function AdminDashboard() {
                       : 'Email Verification Status Unknown'}
                   </span>
                 </div>
-                {/* {auth.currentUser?.email === formData.email && !auth.currentUser?.emailVerified && (
-                //   <button
-                //     type="button"
-                //     onClick={() => sendVerificationEmail(formData.email)}
-                //     className="text-sm text-red-600 hover:text-red-500"
-                //   >
-                //     Send Verification Email
-                //   </button>
-                )} */}
               </div>
 
-              {/* Form Actions */}
               <div className="flex justify-end space-x-4 pt-6">
                 <button
                   type="button"

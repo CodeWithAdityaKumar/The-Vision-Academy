@@ -1,8 +1,11 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
+import { database } from '@/lib/firebase'
+import { ref, onValue } from 'firebase/database'
+import Link from 'next/link'
 
 const Page = () => {
   const router = useRouter()
@@ -10,49 +13,53 @@ const Page = () => {
   const [activeTab, setActiveTab] = useState('notes')
   const [searchQuery, setSearchQuery] = useState('')
   const [classFilter, setClassFilter] = useState('all')
+  const [notes, setNotes] = useState([])
+  const [books, setBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const notesRef = ref(database, 'notes')
+        const booksRef = ref(database, 'books')
+
+        // Set up realtime listeners
+        onValue(notesRef, (snapshot) => {
+          const notesData = []
+          snapshot.forEach((child) => {
+            notesData.push({ id: child.key, ...child.val() })
+          })
+          setNotes(notesData)
+        })
+
+        onValue(booksRef, (snapshot) => {
+          const booksData = []
+          snapshot.forEach((child) => {
+            booksData.push({ id: child.key, ...child.val() })
+          })
+          setBooks(booksData)
+        })
+
+        setLoading(false)
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        setLoading(false)
+      }
+    }
+
+    if (user) {
+      fetchData()
+    }
+  }, [user])
 
   if (!user) {
     router.push('/pages/account/login')
     return null
   }
 
-  const notes = [
-    {
-      id: 1,
-      title: 'Mathematics Notes',
-      description: 'Complete calculus and algebra notes',
-      downloadUrl: '#',
-      subject: 'mathematics',
-      class: 'Class 12'
-    },
-    {
-      id: 2, 
-      title: 'Physics Notes',
-      description: 'Mechanics and thermodynamics notes',
-      downloadUrl: '#',
-      subject: 'physics',
-      class: 'Class 11'
-    }
-  ]
-
-  const books = [
-    {
-      id: 1,
-      title: 'Advanced Mathematics',
-      author: 'Dr. Smith',
-      downloadUrl: '#',
-      subject: 'mathematics',
-      class: 'Class 12'
-    },
-    {
-      id: 2,
-      title: 'Physics Fundamentals',
-      author: 'Prof. Johnson',
-      downloadUrl: '#',
-      subject: 'physics',
-      class: 'Class 11'
-    }
-  ]
+  if (loading) {
+    return <div className="text-center py-4">Loading...</div>
+  }
 
   const classes = ['all', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12']
 
@@ -76,9 +83,11 @@ const Page = () => {
         transition={{ duration: 0.5 }}
         className="max-w-7xl mx-auto"
       >
-        <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
-          Study Resources
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Study Resources
+          </h1>
+        </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
           <div className="flex space-x-4">
@@ -143,11 +152,16 @@ const Page = () => {
                   {note.description}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {note.class}
+                  {note.class} • {note.subject}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Uploaded by: {note.uploadedBy}
                 </p>
                 <a
                   href={note.downloadUrl}
                   className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Download Notes
                 </a>
@@ -170,11 +184,16 @@ const Page = () => {
                   By {book.author}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {book.class}
+                  {book.class} • {book.subject}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Uploaded by: {book.uploadedBy}
                 </p>
                 <a
                   href={book.downloadUrl}
                   className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Download Book
                 </a>
