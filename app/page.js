@@ -10,8 +10,8 @@ export default function Home() {
   return (
     <div>
       <HeroSection />
-      <AddUsers/>
-      <ManageUsers/>
+      {/* <AddUsers/>
+      <ManageUsers/> */}
       <AboutSection />
       <FeaturesSection />
       <CoursesSection />
