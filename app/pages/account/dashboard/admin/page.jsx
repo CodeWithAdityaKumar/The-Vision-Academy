@@ -7,6 +7,10 @@ import { useRouter } from 'next/navigation';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import {sendEmailVerification, createUserWithEmailAndPassword} from 'firebase/auth';
+import CreateLiveClass from '@/components/dashboard/CreateLiveClass';
+import ManageClasses from '@/components/dashboard/ManageClasses';
+import AddBooksAndNotes from '@/components/dashboard/AddBooksAndNotes';
+import ManageBooksAndNotes from '@/components/dashboard/ManageBooksAndNotes';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -41,6 +45,11 @@ export default function AdminDashboard() {
     }
   });
   const [emailVerificationStatus, setEmailVerificationStatus] = useState({});
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   useEffect(() => {
     // Check if user is admin
@@ -277,201 +286,410 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-8"
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row relative overflow-hidden">
+      {/* Hamburger Menu Button */}
+      <button
+        onClick={toggleSidebar}
+        className="md:hidden fixed top-[4.5rem] left-4 z-[0] p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+        aria-label="Toggle Menu"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Admin Dashboard
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Manage teachers and students
-          </p>
-        </motion.div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d={isSidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+          />
+        </svg>
+      </button>
 
-        {error && (
-          <div className="mb-4 text-red-500 text-center">{error}</div>
-        )}
+      
 
-        <div className="mb-6 flex justify-center space-x-4">
+      {/* Sidebar */}
+      <aside 
+        className={`
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0 
+          fixed md:sticky
+          top-0
+          w-[280px] sm:w-64 
+          h-screen 
+          bg-white dark:bg-gray-800 
+          shadow-xl 
+          transition-transform duration-300 ease-in-out 
+          z-50
+          overflow-y-auto
+          scrollbar-hide
+          pt-16 md:pt-8
+        `}
+      >
+
+<button
+        onClick={toggleSidebar}
+        className="md:hidden fixed top-4 left-4 z-[60] p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700"
+        aria-label="Toggle Menu"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d={isSidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+          />
+        </svg>
+      </button>
+        <nav className="space-y-3 px-4">
           <button
-            onClick={() => setActiveTab('teachers')}
-            className={`px-4 py-2 rounded-md ${
-              activeTab === 'teachers'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
+            onClick={() => {
+              setActiveTab('teachers');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'teachers'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
           >
-            Teachers
+            Manage Teachers
           </button>
           <button
-            onClick={() => setActiveTab('students')}
-            className={`px-4 py-2 rounded-md ${
-              activeTab === 'students'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
+            onClick={() => {
+              setActiveTab('students');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'students'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
           >
-            Students
+            Manage Students
           </button>
-        </div>
+          <button
+            onClick={() => {
+              setActiveTab('create-class');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'create-class'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
+          >
+            Create Class
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('manage-classes');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'manage-classes'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
+          >
+            Manage Classes
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('add-books');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'add-books'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
+          >
+            Add Books & Notes
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('manage-books');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'manage-books'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
+          >
+            Manage Books & Notes
+          </button>
+        </nav>
+      </aside>
 
-        <div className="mb-6 space-y-4">
-          <div className="max-w-md mx-auto">
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
-            />
-          </div>
+      {/* Overlay for mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <select
-              value={filters.isVerified}
-              onChange={(e) => setFilters({ ...filters, isVerified: e.target.value })}
-              className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Verification Status</option>
-              <option value="verified">Verified</option>
-              <option value="unverified">Unverified</option>
-            </select>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[3rem]">
+        <div className="p-4 sm:p-6 md:p-8 lg:p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 lg:p-8"
+          >
+            {(activeTab === 'teachers' || activeTab === 'students') && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center mb-8"
+                >
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    Admin Dashboard
+                  </h2>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Manage teachers and students
+                  </p>
+                </motion.div>
 
-            {activeTab === 'teachers' ? (
-              <select
-                value={filters.subject}
-                onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
-                className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Subjects</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Physics">Physics</option>
-                <option value="Chemistry">Chemistry</option>
-              </select>
-            ) : (
-              <select
-                value={filters.class}
-                onChange={(e) => setFilters({ ...filters, class: e.target.value })}
-                className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Classes</option>
-                <option value="Class 6">Class 6</option>
-                <option value="Class 7">Class 7</option>
-                <option value="Class 8">Class 8</option>
-              </select>
+                {error && (
+                  <div className="mb-4 text-red-500 text-center">{error}</div>
+                )}
+
+                <div className="mb-6 space-y-4">
+                  <div className="max-w-md mx-auto">
+                    <input
+                      type="text"
+                      placeholder="Search by name or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    <select
+                      value={filters.isVerified}
+                      onChange={(e) => setFilters({ ...filters, isVerified: e.target.value })}
+                      className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="all">All Verification Status</option>
+                      <option value="verified">Verified</option>
+                      <option value="unverified">Unverified</option>
+                    </select>
+
+                    {activeTab === 'teachers' ? (
+                      <select
+                        value={filters.subject}
+                        onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
+                        className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="all">All Subjects</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                      </select>
+                    ) : (
+                      <select
+                        value={filters.class}
+                        onChange={(e) => setFilters({ ...filters, class: e.target.value })}
+                        className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="all">All Classes</option>
+                        <option value="Class 6">Class 6</option>
+                        <option value="Class 7">Class 7</option>
+                        <option value="Class 8">Class 8</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
+                >
+                  <div className="flex justify-end mb-4">
+                    <button
+                      onClick={openAddModal}
+                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300"
+                    >
+                      Add {activeTab === 'teachers' ? 'Teacher' : 'Student'}
+                    </button>
+                  </div>
+
+                  {loading ? (
+                    <div className="text-center py-4">Loading...</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              Profile
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              Details
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              Contact
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              Email Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {filterData(activeTab === 'teachers' ? teachers : students).map((item) => (
+                            <tr key={item.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="h-10 w-10 flex-shrink-0">
+                                    <img
+                                      className="h-10 w-10 rounded-full object-cover"
+                                      src={item.photoURL || '/default-avatar.png'}
+                                      alt={item.name}
+                                    />
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {item.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                                {item.role}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                                {item.phone}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center space-x-2">
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                    item.email === auth.currentUser?.email && auth.currentUser?.emailVerified
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {item.email === auth.currentUser?.email && auth.currentUser?.emailVerified 
+                                      ? 'Verified' 
+                                      : 'Not Verified'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex items-center space-x-4">
+                                  <button
+                                    onClick={() => openEditModal(item)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(item.id)}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </motion.div>
+              </>
             )}
-          </div>
+
+            {activeTab === 'create-class' && (
+              <CreateLiveClass />
+            )}
+
+            {activeTab === 'manage-classes' && (
+              <ManageClasses />
+            )}
+
+            {activeTab === 'add-books' && (
+              <AddBooksAndNotes />
+            )}
+
+            {activeTab === 'manage-books' && (
+              <ManageBooksAndNotes />
+            )}
+          </motion.div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
-        >
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={openAddModal}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300"
-            >
-              Add {activeTab === 'teachers' ? 'Teacher' : 'Student'}
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-4">Loading...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Profile
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Details
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Email Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filterData(activeTab === 'teachers' ? teachers : students).map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <img
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={item.photoURL || '/default-avatar.png'}
-                              alt={item.name}
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {item.name}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {item.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-                        {item.role}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-                        {item.phone}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            item.email === auth.currentUser?.email && auth.currentUser?.emailVerified
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {item.email === auth.currentUser?.email && auth.currentUser?.emailVerified 
-                              ? 'Verified' 
-                              : 'Not Verified'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-4">
-                          <button
-                            onClick={() => openEditModal(item)}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </motion.div>
-      </div>
+      </main>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
