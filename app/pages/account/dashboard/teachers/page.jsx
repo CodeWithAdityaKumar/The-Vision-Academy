@@ -55,7 +55,7 @@ const TeacherDashboard = () => {
           scrollbar-hide
         `}
       >
-        <nav className="mt-16 md:mt-8 space-y-3 px-4">
+        <nav className="mt-[8rem] md:mt-8 space-y-3 px-4">
           {[
             { id: 'create', label: 'Create Class' },
             { id: 'manage', label: 'Manage Classes' },
