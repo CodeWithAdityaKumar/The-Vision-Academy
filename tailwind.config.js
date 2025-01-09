@@ -1,19 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: [
-      './pages/**/*.{js,jsx}',
-      './components/**/*.{js,jsx}',
-      './app/**/*.{js,jsx}',
-    ],
-    darkMode: 'class',
-    theme: {
-      extend: {
-        animation: {
-          'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          // ... other shades
+          600: '#dc2626',
+          700: '#b91c1c',
         },
       },
     },
-    plugins: [
-    //   require('@tailwindcss/line-clamp'),
-    ],
-  }
+  },
+  plugins: [
+    require('@tailwindcss/forms')({
+      strategy: 'class', // only generate classes
+    }),
+  ],
+}

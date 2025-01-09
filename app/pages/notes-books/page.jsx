@@ -1,10 +1,9 @@
 import React from 'react'
-import LiveClassesSection from '@/components/LiveClassesSection'
 
 const page = () => {
   return (
     <div>
-      <LiveClassesSection />
+      notes
     </div>
   )
 }
