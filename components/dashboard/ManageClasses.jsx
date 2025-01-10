@@ -18,7 +18,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
     teacher: classData.teacher || '',
     teacherEmail: classData.teacherEmail || '',
     teacherPhone: classData.teacherPhone || '',
-    teacherQualification: classData.teacherQualification || '',
+    targetClass: classData.targetClass || 'Class 6',  // Add this line
   });
 
   const handleChange = (e) => {
@@ -63,6 +63,23 @@ function EditClassForm({ classData, onSave, onCancel }) {
             required
             className="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Target Class
+          </label>
+          <select
+            name="targetClass"
+            required
+            value={formData.targetClass}
+            onChange={handleChange}
+            className="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          >
+            {['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map(cls => (
+              <option key={cls} value={cls}>{cls}</option>
+            ))}
+          </select>
         </div>
 
         <div className="col-span-2">
@@ -261,20 +278,23 @@ export default function ManageClasses() {
                       className="rounded-lg"
                     />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {classItem.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {classItem.date} at {classItem.time}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      By {classItem.teacher}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Status: {classItem.status}
-                    </p>
-                  </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {classItem.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {classItem.targetClass} • {classItem.subject}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {classItem.date} at {classItem.time}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        By {classItem.teacher}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Status: {classItem.status}
+                      </p>
+                    </div>
                 </div>
                 <div className="flex space-x-2">
                   <button

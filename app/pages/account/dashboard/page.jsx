@@ -30,7 +30,7 @@ const Page = () => {
                 router.push('/pages/account/dashboard/teachers')
                 break
               case 'student':
-                router.push('/pages/account/dashboard/student')
+                router.push('/pages/account/dashboard/students')
                 break
                 default:
                   router.push('/')

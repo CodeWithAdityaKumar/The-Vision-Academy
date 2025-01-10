@@ -1,9 +1,12 @@
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { database, storage } from '@/lib/firebase';
-import { ref as dbRef, push, set } from 'firebase/database';
+import { ref as dbRef, push, set, onValue } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+
 import { useRouter } from 'next/navigation';
 
 export default function CreateLiveClass() {
@@ -24,9 +27,31 @@ export default function CreateLiveClass() {
     teacherImage: '',
     teacherEmail: '',
     teacherPhone: '',
-    teacherQualification: '',
     meetingLink: '',
+    targetClass: 'Class 6',
+
   });
+
+  const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const teacherRef = dbRef(database, `users/${user.uid}`);
+    onValue(teacherRef, (snapshot) => {
+      const teacherData = snapshot.val();
+      if (teacherData) {
+        setFormData(prev => ({
+          ...prev,
+          teacher: teacherData.name || '',
+          teacherEmail: teacherData.email || '',
+          teacherPhone: teacherData.phone || '',
+          teacherImage: teacherData.photoURL || ''
+        }));
+      }
+    });
+  }, [user]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -148,6 +173,23 @@ export default function CreateLiveClass() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Target Class
+            </label>
+            <select
+              name="targetClass"
+              required
+              value={formData.targetClass}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            >
+              {['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map(cls => (
+                <option key={cls} value={cls}>{cls}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Description
             </label>
             <textarea
@@ -264,7 +306,7 @@ export default function CreateLiveClass() {
 
           <div className="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Teacher Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -273,10 +315,9 @@ export default function CreateLiveClass() {
                 <input
                   type="text"
                   name="teacher"
-                  required
                   value={formData.teacher}
-                  onChange={handleChange}
-                  className="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  readOnly
+                  className="mt-2 p-3 block w-full rounded-md border-gray-300 bg-gray-100 dark:bg-gray-600 shadow-sm dark:text-white cursor-not-allowed"
                 />
               </div>
 
@@ -287,10 +328,9 @@ export default function CreateLiveClass() {
                 <input
                   type="email"
                   name="teacherEmail"
-                  required
                   value={formData.teacherEmail}
-                  onChange={handleChange}
-                  className="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  readOnly
+                  className="mt-2 p-3 block w-full rounded-md border-gray-300 bg-gray-100 dark:bg-gray-600 shadow-sm dark:text-white cursor-not-allowed"
                 />
               </div>
 
@@ -302,21 +342,8 @@ export default function CreateLiveClass() {
                   type="tel"
                   name="teacherPhone"
                   value={formData.teacherPhone}
-                  onChange={handleChange}
-                  className="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Qualification
-                </label>
-                <input
-                  type="text"
-                  name="teacherQualification"
-                  value={formData.teacherQualification}
-                  onChange={handleChange}
-                  className="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  readOnly
+                  className="mt-2 p-3 block w-full rounded-md border-gray-300 bg-gray-100 dark:bg-gray-600 shadow-sm dark:text-white cursor-not-allowed"
                 />
               </div>
             </div>
