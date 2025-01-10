@@ -6,12 +6,14 @@ import ContactSection from '../components/ContactSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import AddUsers from '@/components/dashboard/admin/AddUsers';
 import ManageUsers from '@/components/dashboard/admin/ManageUsers';
+import Profile from '@/components/dashboard/Profile';
 export default function Home() {
   return (
     <div>
       <HeroSection />
-      {/* <AddUsers/>
-      <ManageUsers/> */}
+      <Profile/>
+      <AddUsers/>
+      <ManageUsers/>
       <AboutSection />
       <FeaturesSection />
       <CoursesSection />

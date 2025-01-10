@@ -13,10 +13,12 @@ import AddBooksAndNotes from '@/components/dashboard/AddBooksAndNotes';
 import ManageBooksAndNotes from '@/components/dashboard/ManageBooksAndNotes';
 import AddUsers from '@/components/dashboard/admin/AddUsers';
 import ManageUsers from '@/components/dashboard/admin/ManageUsers';
+import Profile from '@/components/dashboard/Profile';
+
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('manage-users');
+  const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -106,6 +108,29 @@ export default function AdminDashboard() {
         </svg>
       </button>
         <nav className="space-y-3 px-4">
+
+          <button
+            onClick={() => {
+              setActiveTab('profile');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+      ${activeTab === 'profile'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+      flex items-center 
+      w-full 
+      px-4 py-3 
+      text-sm font-medium 
+      rounded-lg 
+      transition-colors duration-150
+      focus:outline-none focus:ring-2 focus:ring-red-500
+    `}
+          >
+            Profile
+          </button>
+
           <button
             onClick={() => {
               setActiveTab('manage-users');
@@ -253,6 +278,7 @@ export default function AdminDashboard() {
             transition={{ duration: 0.5 }}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 lg:p-8"
           >
+            {activeTab === 'profile' && <Profile />}
             {activeTab === 'manage-users' && <ManageUsers />}
             {activeTab === 'add-users' && <AddUsers />}
             {activeTab === 'create-class' && <CreateLiveClass />}

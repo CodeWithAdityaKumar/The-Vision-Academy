@@ -5,9 +5,11 @@ import CreateLiveClass from '@/components/dashboard/CreateLiveClass';
 import ManageClasses from '@/components/dashboard/ManageClasses';
 import AddBooksAndNotes from '@/components/dashboard/AddBooksAndNotes';
 import ManageBooksAndNotes from '@/components/dashboard/ManageBooksAndNotes';
+import Profile from '@/components/dashboard/Profile';
+
 
 const TeacherDashboard = () => {
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState('profile');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -57,6 +59,7 @@ const TeacherDashboard = () => {
       >
         <nav className="mt-[8rem] md:mt-8 space-y-3 px-4">
           {[
+            { id: 'profile', label: 'Profile' },
             { id: 'create', label: 'Create Class' },
             { id: 'manage', label: 'Manage Classes' },
             { id: 'add', label: 'Add Books & Notes' },
@@ -106,6 +109,7 @@ const TeacherDashboard = () => {
             transition={{ duration: 0.5 }}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto"
           >
+            {activeTab === 'profile' && <Profile />}
             {activeTab === 'create' && <CreateLiveClass />}
             {activeTab === 'manage' && <ManageClasses />}
             {activeTab === 'add' && <AddBooksAndNotes />}
