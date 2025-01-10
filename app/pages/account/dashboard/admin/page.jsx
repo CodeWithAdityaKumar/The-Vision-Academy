@@ -27,27 +27,62 @@ export default function AdminDashboard() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // useEffect(() => {
+  //   // Check if user is admin
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     if (!user || user.email !== 'ak6414119@gmail.com') {
+  //       router.push('/pages/account/login');
+  //     } else {
+  //       setLoading(false);
+  //     }
+  //   });
+
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, []);
+
+
   useEffect(() => {
-    // Check if user is admin
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user || user.email !== 'ak6414119@gmail.com') {
+      if (!user) {
         router.push('/pages/account/login');
-      } else {
-        setLoading(false);
+        return;
       }
+
+      // Check user role from database
+      const userRef = ref(database, `users/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        const userData = snapshot.val();
+        if (!userData || userData.role !== 'admin') {
+          router.push('/pages/account/dashboard/teachers');
+          return;
+        }
+        setLoading(false);
+      });
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+    return () => unsubscribe();
+  }, [router]);
+
+  // Add loading state check
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+
+
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row relative overflow-hidden">
       {/* Hamburger Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-[4.5rem] left-4 z-[0] p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+        className="md:hidden fixed top-[5.5rem] left-4 z-[0] p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
         aria-label="Toggle Menu"
       >
         <svg
@@ -89,7 +124,7 @@ export default function AdminDashboard() {
 
 <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-[60] p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700"
+        className="md:hidden fixed top-[5rem] left-4 z-[60] p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700"
         aria-label="Toggle Menu"
       >
         <svg
@@ -107,7 +142,7 @@ export default function AdminDashboard() {
           />
         </svg>
       </button>
-        <nav className="space-y-3 px-4">
+        <nav className="space-y-3 px-4 mt-[4rem]">
 
           <button
             onClick={() => {
@@ -270,8 +305,9 @@ export default function AdminDashboard() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[3rem]">
+      <main className="flex-1 overflow-y-auto scrollbar-hide pt-2">
         <div className="p-4 sm:p-6 md:p-8 lg:p-12">
+        {/* <div> */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

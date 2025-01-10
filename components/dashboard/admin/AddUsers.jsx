@@ -113,7 +113,7 @@ export default function AddUsers() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl"
             >
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                     Add New User

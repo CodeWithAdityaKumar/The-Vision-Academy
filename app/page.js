@@ -4,18 +4,11 @@ import CoursesSection from '../components/CoursesSection';
 import TeachersSection from '../components/TeachersSection';
 import ContactSection from '../components/ContactSection';
 import FeaturesSection from '@/components/FeaturesSection';
-import AddUsers from '@/components/dashboard/admin/AddUsers';
-import ManageUsers from '@/components/dashboard/admin/ManageUsers';
-import Profile from '@/components/dashboard/Profile';
-import StudentDashboard from './pages/account/dashboard/students/page';
+
 export default function Home() {
   return (
     <div>
       <HeroSection />
-      <StudentDashboard />
-      {/* <Profile/>
-      <AddUsers/>
-      <ManageUsers/> */}
       <AboutSection />
       <FeaturesSection />
       <CoursesSection />
