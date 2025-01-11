@@ -122,3 +122,8 @@ const TeacherDashboard = () => {
 };
 
 export default TeacherDashboard;
+
+
+// export const metadata = {
+//   title: 'The Vision Academy : Teacher Dashboard',
+// };

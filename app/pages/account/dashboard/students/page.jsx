@@ -19,7 +19,7 @@ const StudentDashboard = () => {
       {/* Hamburger Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-[4.5rem] left-4 z-[0] p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+        className="md:hidden fixed top-[5.5rem] left-4 z-[0] p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
         aria-label="Toggle Menu"
       >
         <svg
@@ -120,7 +120,7 @@ const StudentDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[3rem]">
+      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[4rem]">
         <div className="p-4 sm:p-6 md:p-8 lg:p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -140,3 +140,7 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+
+// export const metadata = {
+//   title: 'The Vision Academy : Student Dashboard',
+// };

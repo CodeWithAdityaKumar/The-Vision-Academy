@@ -20,9 +20,9 @@ export async function middleware(request) {
   return NextResponse.next();
 }
 
-export const config = {
-  matcher: [
-    '/pages/live-classes/:path*',
-    '/pages/notes-books/:path*',
-  ],
-};
+// export const config = {
+//   matcher: [
+//     '/pages/live-classes/:path*',
+//     '/pages/notes-books/:path*',
+//   ],
+// };

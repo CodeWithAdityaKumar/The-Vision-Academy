@@ -327,3 +327,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+// export const metadata = {
+//   title: 'The Vision Academy : Admin Dashboard',
+// };

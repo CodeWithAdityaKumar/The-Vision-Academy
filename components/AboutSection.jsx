@@ -41,7 +41,7 @@ export default function AboutSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Image
-              src="/images/logo.png"
+              src="/images/logos/transparent/3.png"
               alt="The Vision Academy Logo"
               width={400}
               height={400}

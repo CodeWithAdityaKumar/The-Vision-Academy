@@ -154,6 +154,7 @@ export default function LoginPage() {
               <div className="text-sm">
                 <button
                   onClick={handleForgotPassword}
+                  type='button'
                   className="font-medium text-red-600 hover:text-red-500"
                 >
                   Forgot your password?
@@ -203,3 +204,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
+// export const metadata = {
+//   title: 'The Vision Academy : Login',
+// };

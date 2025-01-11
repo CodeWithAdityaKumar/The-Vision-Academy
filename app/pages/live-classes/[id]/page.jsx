@@ -209,3 +209,7 @@ const LiveClassDetails = () => {
 };
 
 export default LiveClassDetails;
+
+export const metadata = {
+  title: 'The Vision Academy : Live Class Details',
+};

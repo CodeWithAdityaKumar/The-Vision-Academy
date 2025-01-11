@@ -43,7 +43,8 @@ export default function Navigation() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image src="/images/logo.png" alt="Vision Academy Logo" width={40} height={40} className="mr-2 rounded-full" />
+              <Image src="/images/logos/transparent/3.png" alt="Vision Academy Logo" width={50} height={50} className="mr-2 rounded-full" />
+              {/* <Image src="/images/logo.png" alt="Vision Academy Logo" width={40} height={40} className="mr-2 rounded-full" /> */}
               <span className="text-black dark:text-white font-bold text-xl">The Vision Academy</span>
             </Link>
           </div>

@@ -10,7 +10,7 @@ import MedicalIcon from '../public/images/icons/Medical.svg';
 const courseData = [
   {
     Icon: ScholarIcon,
-    title: 'Class 6th-10th',
+    title: 'Class 5th-12th',
     description: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Rem quia sunt, quasi quo illo enim.'
   },
   {

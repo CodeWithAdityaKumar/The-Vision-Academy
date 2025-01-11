@@ -19,3 +19,11 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+export const metadata = {
+  title: 'The Vision Academy',
+  description: 'Welcome to The Vision Academy',
+  icons: {
+    icon: '/images/logos/transparent/3.png',
+  },
+};
