@@ -5,6 +5,8 @@ import Profile from '@/components/dashboard/Profile';
 import ViewClasses from '@/components/dashboard/student/ViewClasses';
 import ViewResources from '@/components/dashboard/student/ViewResources';
 import Progress from '@/components/dashboard/student/Progress';
+import ViewTotalAttendance from '@/components/dashboard/student/ViewTotalAttendance';
+
 
 const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -82,6 +84,7 @@ const StudentDashboard = () => {
             { id: 'profile', label: 'Profile' },
             { id: 'classes', label: 'My Classes' },
             { id: 'resources', label: 'Study Material' },
+            { id: 'attendance', label: 'My Attendance' },
             { id: 'progress', label: 'My Progress' },
           ].map((item) => (
             <button
@@ -131,6 +134,7 @@ const StudentDashboard = () => {
             {activeTab === 'profile' && <Profile />}
             {activeTab === 'classes' && <ViewClasses />}
             {activeTab === 'resources' && <ViewResources />}
+            {activeTab === 'attendance' && <ViewTotalAttendance />}
             {activeTab === 'progress' && <Progress />}
           </motion.div>
         </div>

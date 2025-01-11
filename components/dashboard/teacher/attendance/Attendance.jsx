@@ -315,7 +315,7 @@ const Attendance = ({ isAdmin }) => {
                                             ) : (
                                                 students.map(student => (
                                                     <tr key={student.id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{student.id}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{student.rollNumber}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{student.name}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <button
