@@ -184,9 +184,10 @@ export default function LiveClassesSection() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      <p>By {classItem.teacher}</p>
-                      <p>{classItem.time}</p>
-                      <p>{classItem.date}</p>
+                      <p>Teacher: {classItem.teacher}</p>
+                      <p>{classItem.targetClass}<sup>th</sup> </p>
+                      <p>Date: {classItem.date}</p>
+                      <p>Time: {classItem.time}</p>
                     </div>
                     <motion.button
                       whileHover={{ scale: 1.05 }}

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Grid, Typography, Button } from '@mui/material';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 import { db, auth, database } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import Link from 'next/link';
+import Image from 'next/image';
 
 const ViewClasses = () => {
     const [user] = useAuthState(auth);
@@ -34,6 +37,8 @@ const ViewClasses = () => {
                 const liveClassesRef = ref(database, 'liveClasses');
                 onValue(liveClassesRef, (snapshot) => {
                     const data = snapshot.val();
+                    console.log(studentClass);
+                    
                     if (data) {
                         const filteredClasses = Object.entries(data)
                             .map(([id, values]) => ({
@@ -41,7 +46,7 @@ const ViewClasses = () => {
                                 ...values,
                             }))
                             .filter(classItem => 
-                                classItem.targetClass === studentClass || 
+                                classItem.targetClass === "Class " + studentClass || 
                                 classItem.targetClass === 'all'
                             );
                         setClasses(filteredClasses);
@@ -76,63 +81,61 @@ const ViewClasses = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <Typography variant="h4" gutterBottom>
-                Live Classes for {studentClass}
+            <Typography variant="h6" gutterBottom>
+                Live Classes for Class {studentClass}<sup>th</sup>
             </Typography>
             {classes.length === 0 ? (
                 <Typography align="center" color="textSecondary">
                     No live classes available for your class at the moment.
                 </Typography>
             ) : (
-                <Grid container spacing={3}>
+                <Grid container spacing={3} className='py-8'>
                     {classes.map((classItem) => (
-                        <Grid item xs={12} sm={6} md={4} key={classItem.id}>
-                            <Card sx={{ 
-                                p: 2, 
-                                position: 'relative',
-                                '&:hover': { transform: 'scale(1.02)', transition: 'transform 0.2s' }
-                            }}>
-                                {classItem.status === 'live' && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '9999px',
-                                        fontSize: '0.75rem'
-                                    }}>
-                                        LIVE
+                        <motion.div
+                            key={classItem.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+                        >
+                            <Link href={`/pages/live-classes/${classItem.id}`}>
+                                <div className="relative h-48">
+                                    <Image
+                                        src={classItem.thumbnail}
+                                        alt={classItem.title}
+                                        layout="fill"
+                                        objectFit="cover"
+                                    />
+                                    {classItem.status === 'live' && (
+                                        <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold animate-pulse">
+                                            LIVE
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                        {classItem.title}
+                                    </h3>
+                                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                        {classItem.description}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                            <p>By {classItem.teacher}</p>
+                                            <p>{classItem.time}</p>
+                                            <p>{classItem.date}</p>
+                                        </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300"
+                                        >
+                                            Join Class
+                                        </motion.button>
                                     </div>
-                                )}
-                                <Typography variant="h6">{classItem.title}</Typography>
-                                <Typography variant="body1" color="text.secondary">
-                                    {classItem.description}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                    Subject: {classItem.subject}
-                                </Typography>
-                                <Typography variant="body2">
-                                    Time: {classItem.time}
-                                </Typography>
-                                <Typography variant="body2">
-                                    Teacher: {classItem.teacher}
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    sx={{ 
-                                        mt: 2,
-                                        bgcolor: '#ef4444',
-                                        '&:hover': { bgcolor: '#dc2626' }
-                                    }}
-                                    href={`/pages/live-classes/${classItem.id}`}
-                                >
-                                    Join Class
-                                </Button>
-                            </Card>
-                        </Grid>
+                                </div>
+                            </Link>
+                        </motion.div>
                     ))}
                 </Grid>
             )}

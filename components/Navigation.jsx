@@ -56,7 +56,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-lg z-[60] sticky top-0">
+    <nav className="bg-white dark:bg-gray-800 shadow-lg z-[60] sticky top-[-1px]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -169,7 +169,7 @@ export default function Navigation() {
           {user && (
             <Link
               href={`/pages/account/dashboard/`}
-              className="flex items-center -ml-12"
+              className="hidden md:flex items-center -ml-12"
             >
               <img
                 src={profileImage}

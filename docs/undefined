@@ -198,3 +198,264 @@ export default function Navigation() {
     </nav>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<Grid item xs={12} sm={6} md={4} key={classItem.id}>
+  <Card
+    sx={{
+      p: 2,
+      position: "relative",
+      "&:hover": { transform: "scale(1.02)", transition: "transform 0.2s" },
+    }}
+  >
+    {classItem.status === "live" && (
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          backgroundColor: "#ef4444",
+          color: "white",
+          padding: "4px 8px",
+          borderRadius: "9999px",
+          fontSize: "0.75rem",
+        }}
+      >
+        LIVE
+      </div>
+    )}
+    <Typography variant="h6">{classItem.title}</Typography>
+    <Typography variant="body1" color="text.secondary">
+      {classItem.description}
+    </Typography>
+    <Typography variant="body2" sx={{ mt: 1 }}>
+      Subject: {classItem.subject}
+    </Typography>
+    <Typography variant="body2">Time: {classItem.time}</Typography>
+    <Typography variant="body2">Teacher: {classItem.teacher}</Typography>
+    <Button
+      variant="contained"
+      color="primary"
+      sx={{
+        mt: 2,
+        bgcolor: "#ef4444",
+        "&:hover": { bgcolor: "#dc2626" },
+      }}
+      href={`/pages/live-classes/${classItem.id}`}
+    >
+      Join Class
+    </Button>
+  </Card>
+</Grid>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"use client"
+import React, { useState, useEffect } from 'react';
+import { ref, get, set, getDatabase } from 'firebase/database';
+import { format } from 'date-fns';
+import { FaCheck, FaTimes } from 'react-icons/fa';
+
+const Attendance = () => {
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedDate, setSelectedDate] = useState('');
+    const [students, setStudents] = useState([]);
+    const [attendance, setAttendance] = useState({});
+    const [loading, setLoading] = useState(false);
+
+    const classes = ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
+
+    useEffect(() => {
+        if (selectedClass) {
+            fetchStudents();
+        }
+    }, [selectedClass]);
+
+    const fetchStudents = async () => {
+        setLoading(true);
+        const db = getDatabase();
+        const studentsRef = ref(db, 'users');
+        
+        try {
+            const snapshot = await get(studentsRef);
+            if (snapshot.exists()) {
+                const allUsers = Object.entries(snapshot.val()).map(([id, data]) => ({
+                    id,
+                    ...data
+                }));
+                
+                // Filter students by role and class
+                const filteredStudents = allUsers.filter(user => 
+                    user.role === 'student' && 
+                    user.class === selectedClass.replace('Class ', '')
+                );
+                
+                setStudents(filteredStudents);
+                initializeAttendance(filteredStudents);
+            }
+        } catch (error) {
+            console.error('Error fetching students:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const initializeAttendance = (studentsData) => {
+        const initialAttendance = {};
+        studentsData.forEach(student => {
+            initialAttendance[student.id] = false;
+        });
+        setAttendance(initialAttendance);
+    };
+
+    const handleAttendance = (studentId) => {
+        setAttendance(prev => ({
+            ...prev,
+            [studentId]: !prev[studentId]
+        }));
+    };
+
+    const saveAttendance = async () => {
+        if (!selectedClass || !selectedDate) {
+            alert('Please select both class and date');
+            return;
+        }
+
+        const db = getDatabase();
+        const formattedDate = format(new Date(selectedDate), 'yyyy-MM-dd');
+        const attendanceRef = ref(db, `attendance/${selectedClass}/${formattedDate}`);
+
+        try {
+            await set(attendanceRef, attendance);
+            alert('Attendance saved successfully!');
+        } catch (error) {
+            console.error('Error saving attendance:', error);
+            alert('Error saving attendance');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-6">
+            <div className="max-w-6xl mx-auto">
+                <h1 className="text-3xl font-bold text-gray-800 mb-6">Take Attendance</h1>
+                
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <select
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Select Class</option>
+                            {classes.map(className => (
+                                <option key={className} value={className}>{className}</option>
+                            ))}
+                        </select>
+
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center py-4">Loading...</div>
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Roll No
+                                            </th>
+                                            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Name
+                                            </th>
+                                            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Attendance
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {students.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="3" className="px-6 py-4 text-center text-gray-500">
+                                                    No students found in {selectedClass}
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            students.map(student => (
+                                                <tr key={student.id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-black">{student.id}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-black">{student.name}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-black">
+                                                        <button
+                                                            onClick={() => handleAttendance(student.id)}
+                                                            className={`p-2 rounded-full ${
+                                                                attendance[student.id]
+                                                                    ? 'bg-green-100 text-green-600'
+                                                                    : 'bg-red-100 text-red-600'
+                                                            }`}
+                                                        >
+                                                            {attendance[student.id] ? <FaCheck /> : <FaTimes />}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    onClick={saveAttendance}
+                                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    Save Attendance
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Attendance;

@@ -125,13 +125,15 @@ const LiveClassDetails = () => {
                   {classData.subject}
                 </p>
               </div>
+              <Link href={classData.meetingLink} target='_blank'>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="mt-4 md:mt-0 bg-red-600 text-white px-8 py-3 rounded-md hover:bg-red-700 transition duration-300 text-lg font-semibold"
               >
                 Join Live Class
-              </motion.button>
+                </motion.button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -209,7 +211,3 @@ const LiveClassDetails = () => {
 };
 
 export default LiveClassDetails;
-
-export const metadata = {
-  title: 'The Vision Academy : Live Class Details',
-};

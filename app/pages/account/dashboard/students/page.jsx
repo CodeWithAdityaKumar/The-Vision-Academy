@@ -120,7 +120,7 @@ const StudentDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[4rem]">
+      <main className="flex-1 overflow-y-auto scrollbar-hide mt-[1rem]">
         <div className="p-4 sm:p-6 md:p-8 lg:p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

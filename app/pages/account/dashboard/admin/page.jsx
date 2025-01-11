@@ -14,7 +14,7 @@ import ManageBooksAndNotes from '@/components/dashboard/ManageBooksAndNotes';
 import AddUsers from '@/components/dashboard/admin/AddUsers';
 import ManageUsers from '@/components/dashboard/admin/ManageUsers';
 import Profile from '@/components/dashboard/Profile';
-
+import Attendance from '@/components/dashboard/teacher/attendance/Attendance';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -292,6 +292,27 @@ export default function AdminDashboard() {
           >
             Manage Books & Notes
           </button>
+          <button
+            onClick={() => {
+              setActiveTab('attendance');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+              ${activeTab === 'attendance'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+              flex items-center 
+              w-full 
+              px-4 py-3 
+              text-sm font-medium 
+              rounded-lg 
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-red-500
+            `}
+          >
+            Take Attendance
+          </button>
         </nav>
       </aside>
 
@@ -321,6 +342,7 @@ export default function AdminDashboard() {
             {activeTab === 'manage-classes' && <ManageClasses />}
             {activeTab === 'add-books' && <AddBooksAndNotes />}
             {activeTab === 'manage-books' && <ManageBooksAndNotes />}
+            {activeTab === 'attendance' && <Attendance isAdmin={true} />}
           </motion.div>
         </div>
       </main>
