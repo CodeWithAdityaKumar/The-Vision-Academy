@@ -5,8 +5,9 @@ import Image from 'next/image';
 import { Transition } from '@headlessui/react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/components/AuthProvider';
-import { auth } from '@/lib/firebase';
+import { auth, database } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { ref, onValue } from 'firebase/database';
 import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
@@ -15,10 +16,27 @@ export default function Navigation() {
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  const [profileImage, setProfileImage] = useState('/images/default-profile-picture-png.png');
+  const [userName, setUserName] = useState('Unknown');
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      const userRef = ref(database, `users/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        const userData = snapshot.val();
+        if (userData?.photoURL) {
+          setProfileImage(userData.photoURL);
+        }
+        if (userData?.name) {
+          setUserName(userData.name);
+        }
+      });
+    }
+  }, [user]);
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -44,7 +62,6 @@ export default function Navigation() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Image src="/images/logos/transparent/3.png" alt="Vision Academy Logo" width={50} height={50} className="mr-2 rounded-full" />
-              {/* <Image src="/images/logo.png" alt="Vision Academy Logo" width={40} height={40} className="mr-2 rounded-full" /> */}
               <span className="text-black dark:text-white font-bold text-xl">The Vision Academy</span>
             </Link>
           </div>
@@ -56,6 +73,7 @@ export default function Navigation() {
             <Link href="/pages/notes-books" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">NOTES/BOOKS</Link>
             <Link href="/pages/about" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">ABOUT</Link>
             <Link href="/pages/contact" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">CONTACT</Link>
+            
             {user ? (
               <button
                 onClick={handleLogout}
@@ -71,6 +89,8 @@ export default function Navigation() {
                 LOG IN
               </Link>
             )}
+
+            
             <div className="flex items-center">
               <button
                 onClick={toggleTheme}
@@ -145,6 +165,19 @@ export default function Navigation() {
               )}
             </button>
           </div>
+
+          {user && (
+            <Link
+              href={`/pages/account/dashboard/`}
+              className="flex items-center -ml-12"
+            >
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="h-10 w-10 object-cover border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 transition-colors rounded-full"
+              />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -170,6 +203,22 @@ export default function Navigation() {
                   </svg>
                 </button>
               </div>
+              {user && (
+                <Link
+                  href={`/pages/account/dashboard/`}
+                  className="flex items-center absolute top-4 left-4"
+                >
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className=" h-12 w-12 object-cover border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 transition-colors rounded-full"
+                  />
+
+                  <p className='ml-2'>{userName}</p>
+                </Link>
+              )}
+
+              <hr />
               <Link href="/" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">HOME</Link>
               <Link href="/pages/courses" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">COURSES</Link>
               <Link href="/pages/features" className="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">FEATURES</Link>
