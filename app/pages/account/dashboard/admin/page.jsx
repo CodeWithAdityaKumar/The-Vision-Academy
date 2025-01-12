@@ -15,6 +15,8 @@ import AddUsers from '@/components/dashboard/admin/AddUsers';
 import ManageUsers from '@/components/dashboard/admin/ManageUsers';
 import Profile from '@/components/dashboard/Profile';
 import Attendance from '@/components/dashboard/teacher/attendance/Attendance';
+import PaymentsRequest from '@/components/dashboard/admin/PaymentsRequest';
+
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -313,6 +315,29 @@ export default function AdminDashboard() {
           >
             Take Attendance
           </button>
+
+
+          <button
+            onClick={() => {
+              setActiveTab('payments');
+              setIsSidebarOpen(false);
+            }}
+            className={`
+      ${activeTab === 'payments'
+                ? 'bg-red-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              } 
+      flex items-center 
+      w-full 
+      px-4 py-3 
+      text-sm font-medium 
+      rounded-lg 
+      transition-colors duration-150
+      focus:outline-none focus:ring-2 focus:ring-red-500
+    `}
+          >
+            Payments
+          </button>
         </nav>
       </aside>
 
@@ -343,6 +368,7 @@ export default function AdminDashboard() {
             {activeTab === 'add-books' && <AddBooksAndNotes />}
             {activeTab === 'manage-books' && <ManageBooksAndNotes />}
             {activeTab === 'attendance' && <Attendance isAdmin={true} />}
+            {activeTab === 'payments' && <PaymentsRequest />}
           </motion.div>
         </div>
       </main>

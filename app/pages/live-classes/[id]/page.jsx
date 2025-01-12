@@ -41,7 +41,7 @@ const LiveClassDetails = () => {
             ...data,
             requirements: data.requirements || [],
             topics: data.topics || [],
-            teacherImage: data.teacherImage || '/images/default-teacher.jpg'
+            teacherImage: data.teacherImage || '/images/default-profile-picture-png.png'
           });
         } else {
           setError('Class not found');
@@ -175,13 +175,15 @@ const LiveClassDetails = () => {
               <div>
                 <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-lg">
                   <div className="flex items-center space-x-4 mb-6">
+                    <div className=''>
                     <Image
                       src={classData.teacherImage}
                       alt={classData.teacher}
-                      width={60}
-                      height={60}
-                      className="rounded-full"
-                    />
+                      width={100}
+                      height={100}
+                      className="rounded-full w-12 h-12"
+                      />
+                    </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {classData.teacher}

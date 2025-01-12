@@ -59,12 +59,9 @@ export default function AboutSection() {
                 We Are From <span className="text-red-600 dark:text-red-400" ref={el}></span>
               </h3>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quasi ut voluptatum
-                eveniet doloremque autem excepturi eaque, sit laboriosam voluptatem nisi
-                delectus. Facere explicabo hic minus accusamus alias fuga nihil dolorum quae.
-                Explicabo illo unde, odio consequatur ipsam possimus veritatis, placeat, ab
-                molestiae velit inventore exercitationem consequuntur blanditiis omnis beatae.
-                Dolor iste excepturi ratione soluta quas culpa voluptatum repudiandae harum non.
+                A Coaching institute for class 5th to 12th in Sheohar District where we provide separate teachers of each subject.
+
+                we fixed a aim to provide a best education to students who are studying in class 5th to 12th. As we all are familiar with the education system in a small district of Bihar, SHEOHAR. We decided to provide best education to the students and opened a institute for the improvement of education level in Sheohar. We are trying to provide our best in the building of the future of the country.
               </p>
               <motion.div
                 whileHover={{ scale: 1.05 }}

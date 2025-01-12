@@ -6,6 +6,8 @@ import ViewClasses from '@/components/dashboard/student/ViewClasses';
 import ViewResources from '@/components/dashboard/student/ViewResources';
 import Progress from '@/components/dashboard/student/Progress';
 import ViewTotalAttendance from '@/components/dashboard/student/ViewTotalAttendance';
+import ViewPaymentDetails from '@/components/dashboard/student/payments/ViewPaymentDetails';
+
 
 
 const StudentDashboard = () => {
@@ -86,6 +88,7 @@ const StudentDashboard = () => {
             { id: 'resources', label: 'Study Material' },
             { id: 'attendance', label: 'My Attendance' },
             { id: 'progress', label: 'My Progress' },
+            { id: 'paymentsDetails', label: 'Payment Details' },
           ].map((item) => (
             <button
               key={item.id}
@@ -136,6 +139,8 @@ const StudentDashboard = () => {
             {activeTab === 'resources' && <ViewResources />}
             {activeTab === 'attendance' && <ViewTotalAttendance />}
             {activeTab === 'progress' && <Progress />}
+            {activeTab === 'paymentsDetails' && <ViewPaymentDetails />}
+
           </motion.div>
         </div>
       </main>
