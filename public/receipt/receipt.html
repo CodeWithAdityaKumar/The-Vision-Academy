@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/images/logos/transparent/3.png">
+    <title>Receipt</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <style>
+        @media print {
+            .print:hidden {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class=" bg-gray-100">
+    <div class="lg:block" style="width: 800px; height: 750px; margin: auto;">
+        <div id="receipt" class="bg-white p-8 max-w-[21cm] h-full mx-auto print:shadow-none relative">
+            <!-- Add Watermark -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="relative w-[80%] h-[80%]">
+                    <img src="/images/logos/transparent/3.png" alt="Watermark"
+                        class="object-contain opacity-10 w-full h-full" />
+                </div>
+            </div>
+
+            <div class="border-2 border-gray-800 p-6 relative z-10">
+                <!-- Header -->
+                <div class="flex items-center text-center border-b-2 border-gray-800 pb-4">
+                    <div class="flex items-center mb-4 w-[30%] h-[100%]" style="width: 30%; height: 100%;">
+                        <img src="/images/logos/1.jpg" alt="The Vision Academy Logo" class="w-36 h-36"
+                            style="width: 100%; height: auto;" />
+                    </div>
+                    <div class="w-[45%] mt-[-1rem]" style="width: 50%; height: auto;">
+                        <h1 class="text-5xl font-bold text-black">FEE RECEIPT</h1>
+                        <p class="text-lg text-black font-bold mt-1">
+                            Academic Session :
+                            <span class="underline decoration-1">2025-26</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Receipt Details -->
+                <div class="grid grid-cols-2 gap-8 mt-4 text-sm">
+                    <div class="text-black">
+                        <p>
+                            <strong>Student Name:</strong> <span id="studentName"></span>
+                        </p>
+                        <p>
+                            <strong>Class:</strong> <span id="class"></span><sup>th</sup>
+                        </p>
+                        <p>
+                            <strong>Roll No:</strong> <span id="rollNo"></span>
+                        </p>
+                        <p>
+                            <strong>Address:</strong> <span id="address"></span>
+                        </p>
+                    </div>
+                    <div class="text-black">
+                        <p>
+                            <strong>Receipt No:</strong> <span id="receiptNo"></span>
+                        </p>
+                        <p>
+                            <strong>Date:</strong> <span id="date"></span>
+                        </p>
+                        <p>
+                            <strong>Month:</strong> <span id="month"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fee Table -->
+                <table class="w-full mt-6 border-collapse text-black">
+                    <thead>
+                        <tr>
+                            <th class="border border-gray-800 px-4 py-2 text-left">
+                                Particulars
+                            </th>
+                            <th class="border border-gray-800 px-4 py-2 text-right">
+                                Amount (₹)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-gray-800 px-4 py-2">Monthly Fee</td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold" id="monthlyFee">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-800 px-4 py-2">Other Charges</td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold" id="otherCharges">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-800 px-4 py-2 font-bold">
+                                Total
+                            </td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold" id="total">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-800 px-4 py-2">Paid Amount</td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-green-700" id="paidAmount">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-800 px-4 py-2 font-bold">
+                                Balance Due
+                            </td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-red-700" id="balanceDue">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Signature -->
+                <div class="mt-8 flex justify-between text-black">
+                    <div>
+                        <p>Student's Signature</p>
+                        <div class="mt-8 border-t border-gray-800 w-32"></div>
+                    </div>
+                    <div>
+                        <p>Authorized Signature</p>
+                        <div class="mt-8 border-t border-gray-800 w-32"></div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-8 text-center text-sm text-black">
+                    <p>This is a computer generated receipt, no signature required.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Button -->
+        <div id="btn" class="text-center print:hidden flex justify-center gap-4" style="padding-bottom: 15rem;">
+            <button onclick="printReceipt()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                Print Receipt
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentName = urlParams.get('studentName');
+        const studentClass = urlParams.get('class');
+        const rollNo = urlParams.get('rollNo');
+        const address = urlParams.get('address');
+        const receiptNo = urlParams.get('receiptNo');
+        const date = urlParams.get('date');
+        const month = urlParams.get('month');
+        const monthlyFee = urlParams.get('monthlyFee');
+        const otherCharges = urlParams.get('otherCharges');
+        const total = urlParams.get('total');
+        const paidAmount = urlParams.get('paidAmount');
+        const balanceDue = urlParams.get('balanceDue');
+
+        document.getElementById('studentName').textContent = studentName;
+        document.getElementById('class').textContent = studentClass;
+        document.getElementById('rollNo').textContent = rollNo;
+        document.getElementById('address').textContent = address;
+        document.getElementById('receiptNo').textContent = receiptNo;
+        document.getElementById('date').textContent = date;
+        document.getElementById('month').textContent = month;
+        document.getElementById('monthlyFee').textContent = monthlyFee;
+        document.getElementById('otherCharges').textContent = otherCharges;
+        document.getElementById('total').textContent = total;
+        document.getElementById('paidAmount').textContent = paidAmount;
+        document.getElementById('balanceDue').textContent = balanceDue;
+
+        // document.getElementsByTagName("title").innerTEXT = receiptNo;
+
+        document.addEventListener("DOMContentLoaded", function () {
+                document.title = "The Vision Academy Receipt :" + receiptNo;
+            });
+
+        const printReceipt = () => {
+            let btn = document.getElementById("btn");
+            btn.style.display = "none";
+            window.print();
+            btn.style.display = "flex";
+        }
+    </script>
+
+
+</body>
+
+</html>

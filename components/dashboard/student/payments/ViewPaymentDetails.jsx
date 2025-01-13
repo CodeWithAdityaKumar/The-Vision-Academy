@@ -4,10 +4,14 @@ import { ref, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { useAuth } from '@/components/AuthProvider';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, redirect } from 'next/navigation';
 import Link from 'next/link';
 
 const ViewPaymentDetails = () => {
+
+
+    const router = useRouter();
+
     const { user } = useAuth();
     const [paymentDetails, setPaymentDetails] = useState(null);
     const [classFees, setClassFees] = useState({});
@@ -15,8 +19,8 @@ const ViewPaymentDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().toLocaleString('default', { month: 'long' }));
+    const [paymentHistory, setPaymentHistory] = useState([]);
 
-    const router = useRouter();
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -40,6 +44,9 @@ const ViewPaymentDetails = () => {
             onValue(studentRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    const previousPayment = paymentHistory.length > 0 ? paymentHistory[0] : null;
+                    const previousDue = previousPayment ? previousPayment.balanceDue : 0;
+
                     setPaymentDetails({
                         name: data.name,
                         class: data.class,
@@ -48,18 +55,45 @@ const ViewPaymentDetails = () => {
                         monthlyFee: classFees[data.class]?.monthlyFee || 0,
                         otherCharges: data.fees?.[selectedMonth]?.otherCharges || 0,
                         paidAmount: data.fees?.[selectedMonth]?.paidAmount || 0,
-                        feeStatus: data.fees?.[selectedMonth]?.status || 'Unpaid'
+                        feeStatus: data.fees?.[selectedMonth]?.status || 'Unpaid',
+                        previousDue: previousDue > 0 ? previousDue : 0
                     });
                 }
                 setLoading(false);
             });
+
+            // Fetch all payment history
+            const paymentHistoryRef = ref(database, `users/${user.uid}/feeHistory`);
+            onValue(paymentHistoryRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const history = Object.keys(data).flatMap(month => 
+                        Object.keys(data[month]).map((receiptNumber, index) => {
+                            const previousPayment = index > 0 ? data[month][Object.keys(data[month])[index - 1]] : null;
+                            const previousDue = previousPayment ? previousPayment.balanceDue : 0;
+                            const balanceDue = (data[month][receiptNumber].monthlyFee + data[month][receiptNumber].otherCharges + previousDue) - data[month][receiptNumber].paidAmount;
+                            return {
+                                month,
+                                ...data[month][receiptNumber],
+                                sNo: index + 1,
+                                balanceDue: balanceDue > 0 ? balanceDue : 0
+                            };
+                        })
+                    ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                    setPaymentHistory(history);
+                }
+            });
         }
-    }, [user, selectedMonth, classFees]);
+    }, [user, selectedMonth, classFees, paymentHistory]);
 
 
-    const handleShowReceipt = () => {
+    const handleViewReceipt = (studentId, month) => {
         setLoading(true);
-        router.push(`/pages/account/dashboard/students/paymentReceipt/${userUid}/${selectedMonth}`);
+
+        // router.push(`/pages/account/dashboard/students/paymentReceipt/${studentId}/${month}`)
+
+        window.location.pathname = `/pages/account/dashboard/students/paymentReceipt/${studentId}/${month}`
+        
     };
 
 
@@ -67,8 +101,8 @@ const ViewPaymentDetails = () => {
     if (error) return <div className="text-red-500 p-4">{error}</div>;
     if (!paymentDetails) return <div className="text-center p-4">No payment details found</div>;
 
-    const totalAmount = (paymentDetails.monthlyFee + paymentDetails.otherCharges);
-    const balanceDue = totalAmount - paymentDetails.paidAmount;
+    const totalAmount = (paymentDetails.monthlyFee + paymentDetails.otherCharges + paymentDetails.previousDue);
+    const balanceDue = totalAmount - paymentDetails.paidAmount > 0 ? totalAmount - paymentDetails.paidAmount : 0;
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -105,6 +139,7 @@ const ViewPaymentDetails = () => {
                             <h3 className="font-semibold mb-2">Fee Details</h3>
                             <p>Monthly Fee: ₹{paymentDetails.monthlyFee}</p>
                             <p>Other Charges: ₹{paymentDetails.otherCharges}</p>
+                            <p>Previous Due: ₹{paymentDetails.previousDue}</p>
                             <p>Total Amount: ₹{totalAmount}</p>
                         </div>
                     </div>
@@ -127,18 +162,48 @@ const ViewPaymentDetails = () => {
                     </div>
                 </div>
 
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
+                    <h3 className="font-semibold mb-2">Payment History</h3>
+                    <table className="min-w-full bg-white dark:bg-gray-800">
+                        <thead>
+                            <tr>
+                                <th className="py-2">S. No.</th>
+                                <th className="py-2">Paid Amount</th>
+                                <th className="py-2">Balance Due</th>
+                                <th className="py-2">Date and Time of Payment</th>
+                                <th className="py-2">Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paymentHistory.map((payment, index) => (
+                                <tr key={index} className="text-center">
+                                    <td className="py-2">{index + 1}</td>
+                                    <td className="py-2">₹{payment.paidAmount}</td>
+                                    <td className="py-2">₹{payment.balanceDue > 0 ? payment.balanceDue : 0}</td>
+                                    <td className="py-2">{new Date(payment.updatedAt).toLocaleString()}</td>
+                                    <td className="py-2">
+                                        {/* <Link href={`/pages/account/dashboard/students/paymentReceipt/${userUid}/${payment.month}`}
+                                            className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition-colors"
+                                        >
+                                            Download Receipt
+                                        </Link> */}
+
+                                        <button className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition-colors" onClick={() => handleViewReceipt(userUid, payment.month)}>View Receipt</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
                 <div className="flex justify-center">
-                    <Link href={`/pages/account/dashboard/students/paymentReceipt/${userUid}/${selectedMonth}`}
+                    {/* <Link href={`/pages/account/dashboard/students/paymentReceipt/${userUid}/${selectedMonth}`}
                         className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
                     >
                         View Receipt
-                    </Link>
-                    {/* <button
-                        onClick={() => handleShowReceipt()}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        View Receipt
-                    </button> */}
+                    </Link> */}
+
+                    <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors" onClick={() => handleViewReceipt(userUid, selectedMonth)}>View Receipt</button>
                 </div>
             </div>
         </div>

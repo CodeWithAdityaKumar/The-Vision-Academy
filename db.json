@@ -1,0 +1,318 @@
+{
+    "attendance": {
+        "Class 10": {
+            "2025-01-11": {
+                "5UmNT8GMBvgDtAFFOL2vp3ZzQh32": false
+            },
+            "2025-01-12": {
+                "5UmNT8GMBvgDtAFFOL2vp3ZzQh32": true,
+                "DctbLEQOkNZDU6LwCwHWs34slxP2": false,
+                "JzsSq40dVqQeSZE6KYIHEMgwTxx1": false
+            },
+            "2025-01-13": {
+                "5UmNT8GMBvgDtAFFOL2vp3ZzQh32": true
+            }
+        },
+        "Class 8": {
+            "2025-01-11": {
+                "DctbLEQOkNZDU6LwCwHWs34slxP2": true,
+                "JzsSq40dVqQeSZE6KYIHEMgwTxx1": true
+            },
+            "2025-01-12": {
+                "DctbLEQOkNZDU6LwCwHWs34slxP2": true,
+                "JzsSq40dVqQeSZE6KYIHEMgwTxx1": true
+            },
+            "2025-01-13": {
+                "DctbLEQOkNZDU6LwCwHWs34slxP2": true,
+                "JzsSq40dVqQeSZE6KYIHEMgwTxx1": true
+            }
+        }
+    },
+    "classFees": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+            "monthlyFee": 1000
+        },
+        {
+            "monthlyFee": 2000
+        },
+        {
+            "monthlyFee": 5000
+        },
+        {
+            "monthlyFee": 10000
+        },
+        {
+            "monthlyFee": 15000
+        },
+        {
+            "monthlyFee": 20000
+        },
+        {
+            "monthlyFee": 50000
+        },
+        {
+            "monthlyFee": 100000
+        }
+    ],
+    "liveClasses": {
+        "-OGDphHyqN24V8UQd998": {
+            "createdAt": 1736489489766,
+            "date": "2025-01-11",
+            "description": "jhdbfjahefjad",
+            "meetingLink": "https://meet.google.com",
+            "requirements": [
+                "jdbh fj"
+            ],
+            "status": "upcoming",
+            "subject": "Mathematics",
+            "targetClass": "Class 8",
+            "teacher": "Aditya Kumar ",
+            "teacherEmail": "ak6414119@gmail.com",
+            "teacherImage": "",
+            "teacherPhone": "9835380073",
+            "teacherQualification": "Deploma 3rd Year",
+            "thumbnail": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/class-thumbnails%2F1736489480443-logo.jpg?alt=media&token=86f16354-b3a1-43db-ab96-f0a33849302f",
+            "time": "11:42",
+            "title": "Demo",
+            "topics": [
+                "sndf vjsdf",
+                "msdnf vm"
+            ]
+        },
+        "-OGLx27ihj3oH8aD1BSw": {
+            "createdAt": 1736625631664,
+            "date": "2025-01-12",
+            "description": "We will Discuss About AI and ML",
+            "meetingLink": "https://meet.google.com",
+            "requirements": [
+                "Laptop ",
+                "Basics of Python"
+            ],
+            "status": "upcoming",
+            "subject": "Computer",
+            "targetClass": "Class 8",
+            "teacher": "Adarsh Kumar",
+            "teacherEmail": "adityakumar7079629108@gmail.com",
+            "teacherImage": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/profile-photos%2Ffd6D518vUlcvG3jgqYcgIISTqOt2-1736604067165-download.jpg?alt=media&token=71888fa2-2eb5-4b7a-98d3-c0f569da3207",
+            "teacherPhone": "09835380073",
+            "thumbnail": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/class-thumbnails%2F1736625629079-images%20(10).jpeg?alt=media&token=f983615c-d5ba-4b8c-b9f8-fb3decde3481",
+            "time": "21:30",
+            "title": "AI/ML",
+            "topics": [
+                "Bacis"
+            ]
+        }
+    },
+    "notes": {
+        "-OGA1ProGBRZbSmcA7ls": {
+            "class": "Class 6",
+            "description": "sejrbgjesr",
+            "downloadUrl": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/notes%2F1736425704939-CS-211.pdf?alt=media&token=059b4219-07e7-437c-8177-1440e830119c",
+            "subject": "jabrfgjesr",
+            "title": "arger",
+            "uploadedAt": "2025-01-09T12:28:33.213Z",
+            "uploadedBy": "ak6414119@gmail.com"
+        },
+        "-OGDqdQxnt5YoOVBMo3e": {
+            "class": "Class 10",
+            "description": "Class 10 English ",
+            "downloadUrl": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/notes%2F1736489730858-Question%20Paper%20(Endeavour).pdf?alt=media&token=be43e42e-6da6-47f1-9819-7e910388df9e",
+            "subject": "Mathematics ",
+            "title": "HEIGHT & DISTANCE CLASS 10",
+            "uploadedAt": "2025-01-10T06:15:36.133Z",
+            "uploadedBy": "2311063@sliet.ac.in"
+        }
+    },
+    "settings": {
+        "attendancePassword": "123456789"
+    },
+    "users": {
+        "5UmNT8GMBvgDtAFFOL2vp3ZzQh32": {
+            "about": "",
+            "class": "10",
+            "email": "11anandraj21@gmail.com",
+            "feeHistory": {
+                "February": {
+                    "TVA20250113233656": {
+                        "monthlyFee": 20000,
+                        "otherCharges": 0,
+                        "paidAmount": 26000,
+                        "receiptNumber": "TVA20250113233656",
+                        "status": "Paid",
+                        "updatedAt": "2025-01-13T18:06:56.797Z"
+                    }
+                },
+                "January": {
+                    "TVA20250113233611": {
+                        "monthlyFee": 20000,
+                        "otherCharges": 0,
+                        "paidAmount": 14000,
+                        "receiptNumber": "TVA20250113233611",
+                        "status": "Unpaid",
+                        "updatedAt": "2025-01-13T18:06:12.315Z"
+                    }
+                }
+            },
+            "fees": {
+                "February": {
+                    "monthlyFee": 20000,
+                    "otherCharges": 0,
+                    "paidAmount": 26000,
+                    "receiptNumber": "TVA20250113233656",
+                    "status": "Paid",
+                    "updatedAt": "2025-01-13T18:06:56.433Z"
+                },
+                "January": {
+                    "monthlyFee": 20000,
+                    "otherCharges": 0,
+                    "paidAmount": 14000,
+                    "receiptNumber": "TVA20250113233611",
+                    "status": "Unpaid",
+                    "updatedAt": "2025-01-13T18:06:11.759Z"
+                }
+            },
+            "name": "Anand Raj",
+            "phone": "9472372936",
+            "photoURL": "/images/default-profile-picture-png.png",
+            "role": "student",
+            "socialLinks": {
+                "facebook": "",
+                "instagram": "",
+                "linkedin": ""
+            },
+            "subject": "",
+            "whatsapp": "9472372936"
+        },
+        "DctbLEQOkNZDU6LwCwHWs34slxP2": {
+            "about": "",
+            "class": "8",
+            "email": "fisoy48491@suggets.com",
+            "fee": 0,
+            "feeStatus": "Paid",
+            "fees": {
+                "January": {
+                    "monthlyFee": 10000,
+                    "otherCharges": 0,
+                    "paidAmount": 10000,
+                    "status": "Paid",
+                    "updatedAt": "2025-01-12T17:15:53.092Z"
+                }
+            },
+            "name": "Adarsh Kumar",
+            "phone": "7352421673",
+            "photoURL": "/images/default-profile-picture-png.png",
+            "role": "student",
+            "rollNumber": 25,
+            "socialLinks": {
+                "facebook": "",
+                "instagram": "",
+                "linkedin": ""
+            },
+            "subject": "",
+            "whatsapp": "7352421673"
+        },
+        "JQ0sxE5BMWPC3Q6fxAplIzgBQOm2": {
+            "about": "",
+            "class": "",
+            "email": "2311063@sliet.ac.in",
+            "name": "Aditya Kumar",
+            "phone": "9835380073",
+            "photoURL": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/profile-photos%2FJQ0sxE5BMWPC3Q6fxAplIzgBQOm2-1736484898219-logo.jpg?alt=media&token=9016dd5d-796e-4f5a-a06b-e964a46b451f",
+            "role": "admin",
+            "socialLinks": {
+                "facebook": "facebook.com",
+                "instagram": "instagram.com",
+                "linkedin": "linkedin.com"
+            },
+            "subject": "Computer",
+            "whatsapp": "9835380073"
+        },
+        "JzsSq40dVqQeSZE6KYIHEMgwTxx1": {
+            "about": "",
+            "class": "8",
+            "email": "ak6414119@gmail.com",
+            "feeHistory": {
+                "February": {
+                    "TVA20250113235512": {
+                        "monthlyFee": 10000,
+                        "otherCharges": 0,
+                        "paidAmount": 12000,
+                        "receiptNumber": "TVA20250113235512",
+                        "status": "Paid",
+                        "updatedAt": "2025-01-13T18:25:13.188Z"
+                    },
+                    "TVA20250113235855": {
+                        "monthlyFee": 10000,
+                        "otherCharges": 0,
+                        "paidAmount": 10000,
+                        "receiptNumber": "TVA20250113235855",
+                        "status": "Paid",
+                        "updatedAt": "2025-01-13T18:28:56.473Z"
+                    }
+                },
+                "January": {
+                    "TVA20250113235437": {
+                        "monthlyFee": 10000,
+                        "otherCharges": 0,
+                        "paidAmount": 8000,
+                        "receiptNumber": "TVA20250113235437",
+                        "status": "Unpaid",
+                        "updatedAt": "2025-01-13T18:24:37.593Z"
+                    }
+                }
+            },
+            "feeStatus": "Paid",
+            "fees": {
+                "February": {
+                    "monthlyFee": 10000,
+                    "otherCharges": 0,
+                    "paidAmount": 10000,
+                    "receiptNumber": "TVA20250113235855",
+                    "status": "Paid",
+                    "updatedAt": "2025-01-13T18:28:55.781Z"
+                },
+                "January": {
+                    "monthlyFee": 10000,
+                    "otherCharges": 0,
+                    "paidAmount": 8000,
+                    "receiptNumber": "TVA20250113235437",
+                    "status": "Unpaid",
+                    "updatedAt": "2025-01-13T18:24:37.248Z"
+                }
+            },
+            "name": "Vivek Kumar",
+            "phone": "09835380073",
+            "photoURL": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/profile-photos%2FJzsSq40dVqQeSZE6KYIHEMgwTxx1-1736626934045-1686578672471.jpg?alt=media&token=574925e5-98f0-4542-90ce-75fcf4aa298e",
+            "role": "student",
+            "rollNumber": 26,
+            "socialLinks": {
+                "facebook": "https://www.Instagram.com/",
+                "instagram": "https://www.Instagram.com/",
+                "linkedin": "https://www.Instagram.com/"
+            },
+            "subject": "",
+            "whatsapp": "9835380073"
+        },
+        "fd6D518vUlcvG3jgqYcgIISTqOt2": {
+            "about": "",
+            "class": "",
+            "email": "adityakumar7079629108@gmail.com",
+            "name": "Adarsh Kumar",
+            "phone": "09835380073",
+            "photoURL": "https://firebasestorage.googleapis.com/v0/b/learningfirebase-467e7.appspot.com/o/profile-photos%2Ffd6D518vUlcvG3jgqYcgIISTqOt2-1736604067165-download.jpg?alt=media&token=71888fa2-2eb5-4b7a-98d3-c0f569da3207",
+            "role": "teacher",
+            "socialLinks": {
+                "facebook": "https://www.facebook.com/",
+                "instagram": "https://www.Instagram.com/",
+                "linkedin": "https://www.linkedin.com/"
+            },
+            "subject": "SST",
+            "whatsapp": "9835380073"
+        }
+    }
+}
