@@ -12,6 +12,15 @@
             .print:hidden {
                 display: none;
             }
+             #receipt {
+                max-width: 100%;
+                height: auto;
+                margin: 0;
+                padding: 10px;
+                box-shadow: none;
+                transform: scale(0.80);
+                transform-origin: top center;
+            }
         }
     </style>
 </head>
@@ -104,14 +113,16 @@
                         </tr>
                         <tr>
                             <td class="border border-gray-800 px-4 py-2">Paid Amount</td>
-                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-green-700" id="paidAmount">
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-green-700"
+                                id="paidAmount">
                             </td>
                         </tr>
                         <tr>
                             <td class="border border-gray-800 px-4 py-2 font-bold">
                                 Balance Due
                             </td>
-                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-red-700" id="balanceDue">
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-red-700"
+                                id="balanceDue">
                             </td>
                         </tr>
                     </tbody>
@@ -175,8 +186,8 @@
         // document.getElementsByTagName("title").innerTEXT = receiptNo;
 
         document.addEventListener("DOMContentLoaded", function () {
-                document.title = "The Vision Academy Receipt :" + receiptNo;
-            });
+            document.title = "The Vision Academy Receipt :" + receiptNo;
+        });
 
         const printReceipt = () => {
             let btn = document.getElementById("btn");
