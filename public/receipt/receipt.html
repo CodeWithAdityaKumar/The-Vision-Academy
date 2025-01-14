@@ -18,7 +18,7 @@
                 margin: 0;
                 padding: 10px;
                 box-shadow: none;
-                transform: scale(0.80);
+                transform: scale(0.75);
                 transform-origin: top center;
             }
         }
@@ -105,6 +105,11 @@
                             </td>
                         </tr>
                         <tr>
+                            <td class="border border-gray-800 px-4 py-2">Previous Month Due</td>
+                            <td class="border border-gray-800 px-4 py-2 text-right font-bold text-red-700" id="previousMonthDue">
+                            </td>
+                        </tr>
+                        <tr>
                             <td class="border border-gray-800 px-4 py-2 font-bold">
                                 Total
                             </td>
@@ -148,7 +153,7 @@
         </div>
 
         <!-- Print Button -->
-        <div id="btn" class="text-center print:hidden flex justify-center gap-4" style="padding-bottom: 15rem;">
+        <div id="btn" class="mt-8 text-center print:hidden flex justify-center gap-4" style="padding-bottom: 15rem;">
             <button onclick="printReceipt()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 Print Receipt
             </button>
@@ -157,37 +162,50 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const studentName = urlParams.get('studentName');
-        const studentClass = urlParams.get('class');
-        const rollNo = urlParams.get('rollNo');
-        const address = urlParams.get('address');
-        const receiptNo = urlParams.get('receiptNo');
-        const date = urlParams.get('date');
-        const month = urlParams.get('month');
-        const monthlyFee = urlParams.get('monthlyFee');
-        const otherCharges = urlParams.get('otherCharges');
-        const total = urlParams.get('total');
-        const paidAmount = urlParams.get('paidAmount');
-        const balanceDue = urlParams.get('balanceDue');
+        const userId = urlParams.get('userId');
+        const receiptNumber = urlParams.get('receiptNumber');
 
-        document.getElementById('studentName').textContent = studentName;
-        document.getElementById('class').textContent = studentClass;
-        document.getElementById('rollNo').textContent = rollNo;
-        document.getElementById('address').textContent = address;
-        document.getElementById('receiptNo').textContent = receiptNo;
-        document.getElementById('date').textContent = date;
-        document.getElementById('month').textContent = month;
-        document.getElementById('monthlyFee').textContent = monthlyFee;
-        document.getElementById('otherCharges').textContent = otherCharges;
-        document.getElementById('total').textContent = total;
-        document.getElementById('paidAmount').textContent = paidAmount;
-        document.getElementById('balanceDue').textContent = balanceDue;
+        async function fetchReceiptData() {
+            try {
+                const response = await fetch('/api/receipt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        receiptNumber: receiptNumber
+                    })
+                });
 
-        // document.getElementsByTagName("title").innerTEXT = receiptNo;
+                if (!response.ok) {
+                    throw new Error('Failed to fetch receipt data');
+                }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            document.title = "The Vision Academy Receipt :" + receiptNo;
-        });
+                const data = await response.json();
+                
+                document.getElementById('studentName').textContent = data.studentName;
+                document.getElementById('class').textContent = data.class;
+                document.getElementById('rollNo').textContent = data.rollNo;
+                document.getElementById('address').textContent = data.address;
+                document.getElementById('receiptNo').textContent = data.receiptNo;
+                document.getElementById('date').textContent = new Date(data.date).toLocaleDateString();
+                document.getElementById('month').textContent = data.month;
+                document.getElementById('monthlyFee').textContent = data.monthlyFee;
+                document.getElementById('otherCharges').textContent = data.otherCharges;
+                document.getElementById('total').textContent = data.total;
+                document.getElementById('paidAmount').textContent = data.paidAmount;
+                document.getElementById('balanceDue').textContent = data.balanceDue;
+                document.getElementById('previousMonthDue').textContent = data.previousMonthDue;
+
+                document.title = "The Vision Academy Receipt: " + data.receiptNo;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to fetch receipt data');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchReceiptData);
 
         const printReceipt = () => {
             let btn = document.getElementById("btn");
