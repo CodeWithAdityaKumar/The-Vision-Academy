@@ -1,18 +1,12 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ref, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { useAuth } from '@/components/AuthProvider';
 
-import { useRouter, redirect } from 'next/navigation';
-import Link from 'next/link';
-
 const ViewPaymentDetails = () => {
-
-
-    const router = useRouter();
-
     const { user } = useAuth();
+    const iframeRef = useRef();
     const [paymentDetails, setPaymentDetails] = useState(null);
     const [classFees, setClassFees] = useState({});
     const [userUid, setUserUid] = useState({});
@@ -20,7 +14,6 @@ const ViewPaymentDetails = () => {
     const [error, setError] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().toLocaleString('default', { month: 'long' }));
     const [paymentHistory, setPaymentHistory] = useState([]);
-
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -86,16 +79,12 @@ const ViewPaymentDetails = () => {
         }
     }, [user, selectedMonth, classFees, paymentHistory]);
 
-
-    const handleViewReceipt = (studentId, month) => {
-        setLoading(true);
-
-        // router.push(`/pages/account/dashboard/students/paymentReceipt/${studentId}/${month}`)
-
-        window.location.pathname = `/pages/account/dashboard/students/paymentReceipt/${studentId}/${month}`
-        
+    const handleViewReceipt = (studentId, receiptNumber) => {
+        if (iframeRef.current) {
+            alert('Printing receipt Please Wait...');
+            iframeRef.current.src = `/receipt/receipt.html?userId=${studentId}&receiptNumber=${receiptNumber}`;
+        }
     };
-
 
     if (loading) return <div className="text-center p-4">Loading...</div>;
     if (error) return <div className="text-red-500 p-4">{error}</div>;
@@ -106,6 +95,12 @@ const ViewPaymentDetails = () => {
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
+            <iframe 
+                ref={iframeRef}
+                style={{ display: 'none' }}
+                title="Print Receipt"
+            />
+
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
                 <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Payment Details</h2>
 
@@ -164,47 +159,50 @@ const ViewPaymentDetails = () => {
 
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
                     <h3 className="font-semibold mb-2">Payment History</h3>
-                    <table className="min-w-full bg-white dark:bg-gray-800">
-                        <thead>
-                            <tr>
-                                <th className="py-2">S. No.</th>
-                                <th className="py-2">Paid Amount</th>
-                                <th className="py-2">Balance Due</th>
-                                <th className="py-2">Date and Time of Payment</th>
-                                <th className="py-2">Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paymentHistory.map((payment, index) => (
-                                <tr key={index} className="text-center">
-                                    <td className="py-2">{index + 1}</td>
-                                    <td className="py-2">₹{payment.paidAmount}</td>
-                                    <td className="py-2">₹{payment.balanceDue > 0 ? payment.balanceDue : 0}</td>
-                                    <td className="py-2">{new Date(payment.updatedAt).toLocaleString()}</td>
-                                    <td className="py-2">
-                                        {/* <Link href={`/pages/account/dashboard/students/paymentReceipt/${userUid}/${payment.month}`}
-                                            className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition-colors"
-                                        >
-                                            Download Receipt
-                                        </Link> */}
-
-                                        <button className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition-colors" onClick={() => handleViewReceipt(userUid, payment.month)}>View Receipt</button>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white dark:bg-gray-800">
+                            <thead>
+                                <tr>
+                                    <th className="py-2">S. No.</th>
+                                    <th className="py-2">Paid Amount</th>
+                                    <th className="py-2">Balance Due</th>
+                                    <th className="py-2">Date and Time of Payment</th>
+                                    <th className="py-2">Receipt</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {paymentHistory.map((payment, index) => (
+                                    <tr key={index} className="text-center">
+                                        <td className="py-2">{index + 1}</td>
+                                        <td className="py-2">₹{payment.paidAmount}</td>
+                                        <td className="py-2">₹{payment.balanceDue > 0 ? payment.balanceDue : 0}</td>
+                                        <td className="py-2">{new Date(payment.updatedAt).toLocaleString()}</td>
+                                        <td className="py-2">
+                                            <button 
+                                                className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition-colors"
+                                                onClick={() => handleViewReceipt(userUid, payment.receiptNumber)}
+                                            >
+                                                Print Receipt
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div className="flex justify-center">
-                    {/* <Link href={`/pages/account/dashboard/students/paymentReceipt/${userUid}/${selectedMonth}`}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        View Receipt
-                    </Link> */}
-
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors" onClick={() => handleViewReceipt(userUid, selectedMonth)}>View Receipt</button>
-                </div>
+                {/* Current month receipt button */}
+                {paymentDetails.feeStatus !== 'Unpaid' && (
+                    <div className="flex justify-center">
+                        <button 
+                            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                            onClick={() => handleViewReceipt(userUid, paymentDetails.receiptNumber)}
+                        >
+                            Print Current Month Receipt
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -205,14 +205,21 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", fetchReceiptData);
-
         const printReceipt = () => {
-            let btn = document.getElementById("btn");
-            btn.style.display = "none";
-            window.print();
-            btn.style.display = "flex";
-        }
+                let btn = document.getElementById("btn");
+                btn.style.display = "none";
+                window.print();
+                btn.style.display = "flex";
+                // window.history.back();
+                
+            }
+
+        document.addEventListener("DOMContentLoaded", async function (){
+           await fetchReceiptData();
+            await printReceipt();
+        } );
+
+        
     </script>
 
 

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button>Download</button>
+
+    <iframe src="" frameborder="0" style="display: none;"></iframe>
+
+
+
+
+
+    <script>
+       let btn = document.querySelector('button');
+       let iframe = document.querySelector('iframe');
+
+         btn.addEventListener('click', async function () {
+              iframe.src = "/receipt/receipt.html?userId=5UmNT8GMBvgDtAFFOL2vp3ZzQh32&receiptNumber=TVA20250114093112";
+
+            //   window.location.reload();
+         });
+            
+    </script>
+</body>
+</html>
