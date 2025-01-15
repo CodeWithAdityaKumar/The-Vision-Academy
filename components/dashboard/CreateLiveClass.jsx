@@ -1,12 +1,13 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { database, storage } from '@/lib/firebase';
 import { ref as dbRef, push, set, onValue } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
-
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
 
 export default function CreateLiveClass() {
@@ -94,6 +95,9 @@ export default function CreateLiveClass() {
     }
   };
 
+  const showError = (message) => toast.error(message);
+  const showSuccess = (message) => toast.success(message);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -118,69 +122,67 @@ export default function CreateLiveClass() {
         createdAt: Date.now(),
       });
 
+      showSuccess('Class created successfully!');
       router.push('/pages/live-classes');
     } catch (err) {
-      setError('Failed to create class. Please try again.');
+      showError('Failed to create class. Please try again.');
       console.error('Error creating class:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const inputClassName = "mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white hover:shadow-md focus:shadow-lg";
+  const labelClassName = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+  const buttonClassName = "px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+      <ToastContainer position="top-right" theme="colored" />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto backdrop-blur-sm bg-white/80 dark:bg-gray-800/90 rounded-2xl shadow-2xl p-6 md:p-8"
       >
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Create New Live Class</h2>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Class Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className={labelClassName}>Class Title</label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={formData.title}
+                onChange={handleChange}
+                className={inputClassName}
+              />
+            </div>
+
+            <div>
+              <label className={labelClassName}>Subject</label>
+              <input
+                type="text"
+                name="subject"
+                required
+                value={formData.subject}
+                onChange={handleChange}
+                className={inputClassName}
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Subject
-            </label>
-            <input
-              type="text"
-              name="subject"
-              required
-              value={formData.subject}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Target Class
-            </label>
+            <label className={labelClassName}>Target Class</label>
             <select
               name="targetClass"
               required
               value={formData.targetClass}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className={inputClassName}
             >
               {['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map(cls => (
                 <option key={cls} value={cls}>{cls}</option>
@@ -189,53 +191,45 @@ export default function CreateLiveClass() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Description
-            </label>
+            <label className={labelClassName}>Description</label>
             <textarea
               name="description"
               required
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className={inputClassName}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Date
-              </label>
+              <label className={labelClassName}>Date</label>
               <input
                 type="date"
                 name="date"
                 required
                 value={formData.date}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className={inputClassName}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Time
-              </label>
+              <label className={labelClassName}>Time</label>
               <input
                 type="time"
                 name="time"
                 required
                 value={formData.time}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className={inputClassName}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Thumbnail
-            </label>
+            <label className={labelClassName}>Thumbnail</label>
             <input
               type="file"
               accept="image/*"
@@ -245,16 +239,14 @@ export default function CreateLiveClass() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Topics Covered
-            </label>
+            <label className={labelClassName}>Topics Covered</label>
             {topics.map((topic, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={topic}
                   onChange={(e) => handleTopicChange(index, e.target.value)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className={inputClassName}
                 />
                 <button
                   type="button"
@@ -275,16 +267,14 @@ export default function CreateLiveClass() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Requirements
-            </label>
+            <label className={labelClassName}>Requirements</label>
             {requirements.map((req, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={req}
                   onChange={(e) => handleRequirementChange(index, e.target.value)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className={inputClassName}
                 />
                 <button
                   type="button"
@@ -309,9 +299,7 @@ export default function CreateLiveClass() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Teacher Name
-                </label>
+                <label className={labelClassName}>Teacher Name</label>
                 <input
                   type="text"
                   name="teacher"
@@ -322,9 +310,7 @@ export default function CreateLiveClass() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email
-                </label>
+                <label className={labelClassName}>Email</label>
                 <input
                   type="email"
                   name="teacherEmail"
@@ -335,9 +321,7 @@ export default function CreateLiveClass() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Phone
-                </label>
+                <label className={labelClassName}>Phone</label>
                 <input
                   type="tel"
                   name="teacherPhone"
@@ -349,9 +333,7 @@ export default function CreateLiveClass() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Meeting Link
-              </label>
+              <label className={labelClassName}>Meeting Link</label>
               <input
                 type="url"
                 name="meetingLink"
@@ -359,24 +341,38 @@ export default function CreateLiveClass() {
                 value={formData.meetingLink}
                 onChange={handleChange}
                 placeholder="https://meet.google.com/..."
-                className="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className={inputClassName}
               />
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? 'Creating...' : 'Create Class'}
-            </button>
-          </div>
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center"
+              >
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto"></div>
+                  <p className="text-center mt-4 text-gray-600 dark:text-gray-300">Creating class...</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`w-full ${buttonClassName}`}
+          >
+            {loading ? 'Creating...' : 'Create Class'}
+          </motion.button>
         </form>
       </motion.div>
     </div>
   );
-} 
+}

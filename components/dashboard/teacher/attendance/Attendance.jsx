@@ -2,19 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get, set, getDatabase } from 'firebase/database';
 import { format } from 'date-fns';
-import { FaCheck, FaEye, FaEyeSlash, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaEye, FaEyeSlash, FaTimes, FaUmbrella } from 'react-icons/fa';
 import { onValue } from 'firebase/database';
-// Add theme import
 import { useTheme } from 'next-themes';
 import PasswordModal from './PasswordModal';
-import { useRouter } from 'next/navigation';  // Change this line
-
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Attendance = ({ isAdmin }) => {
 
-    const router = useRouter();  // Add this line
+    const router = useRouter();
 
-    // Add theme hook
     const { theme } = useTheme();
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
@@ -23,37 +21,28 @@ const Attendance = ({ isAdmin }) => {
     const [loading, setLoading] = useState(false);
     const [existingAttendance, setExistingAttendance] = useState(null);
     const [loadingExisting, setLoadingExisting] = useState(false);
-    // Add new states
     const [isVerified, setIsVerified] = useState(isAdmin ? true : false);
     const [showModal, setShowModal] = useState(isAdmin ? false : true);
-
-    // Add new states after existing states
     const [newPassword, setNewPassword] = useState('');
     const [passwordUpdateSuccess, setPasswordUpdateSuccess] = useState(false);
     const [passwordError, setPasswordError] = useState('');
-
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-
-
-
 
     const classes = ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
 
     console.log('isAdmin:', isAdmin);
-    
 
     useEffect(() => {
         const db = getDatabase();
         const passwordRef = ref(db, 'settings/attendancePassword');
-        
+
         onValue(passwordRef, (snapshot) => {
             if (snapshot.exists()) {
                 setNewPassword(snapshot.val());
             }
         });
     }, []);
-    
 
     useEffect(() => {
         if (selectedClass) {
@@ -71,7 +60,7 @@ const Attendance = ({ isAdmin }) => {
         setLoading(true);
         const db = getDatabase();
         const studentsRef = ref(db, 'users');
-        
+
         try {
             const snapshot = await get(studentsRef);
             if (snapshot.exists()) {
@@ -79,13 +68,12 @@ const Attendance = ({ isAdmin }) => {
                     id,
                     ...data
                 }));
-                
-                // Filter students by role and class
-                const filteredStudents = allUsers.filter(user => 
-                    user.role === 'student' && 
+
+                const filteredStudents = allUsers.filter(user =>
+                    user.role === 'student' &&
                     user.class === selectedClass.replace('Class ', '')
                 );
-                
+
                 setStudents(filteredStudents);
                 initializeAttendance(filteredStudents);
             }
@@ -122,15 +110,15 @@ const Attendance = ({ isAdmin }) => {
     const initializeAttendance = (studentsData) => {
         const initialAttendance = {};
         studentsData.forEach(student => {
-            initialAttendance[student.id] = false;
+            initialAttendance[student.id] = 'absent'; // Default to absent
         });
         setAttendance(initialAttendance);
     };
 
-    const handleAttendance = (studentId) => {
+    const handleAttendance = (studentId, status) => {
         setAttendance(prev => ({
             ...prev,
-            [studentId]: !prev[studentId]
+            [studentId]: status
         }));
     };
 
@@ -153,9 +141,6 @@ const Attendance = ({ isAdmin }) => {
         }
     };
 
-
-
-    // Add password update function after existing functions
     const handlePasswordChange = async () => {
         if (!newPassword) {
             setPasswordError('Password cannot be empty');
@@ -176,12 +161,10 @@ const Attendance = ({ isAdmin }) => {
         }
     };
 
-
-    // Add password verification function
     const verifyPassword = async (enteredPassword) => {
         const db = getDatabase();
         const passwordRef = ref(db, 'settings/attendancePassword');
-        
+
         try {
             const snapshot = await get(passwordRef);
             if (snapshot.exists()) {
@@ -199,98 +182,156 @@ const Attendance = ({ isAdmin }) => {
         }
     };
 
-    // Update return statement to show modal or attendance
+    const markAllHoliday = () => {
+        const updatedAttendance = {};
+        students.forEach(student => {
+            updatedAttendance[student.id] = 'holiday';
+        });
+        setAttendance(updatedAttendance);
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-            {!isAdmin && showModal && !isVerified? (
-                <PasswordModal 
-                    onVerify={verifyPassword}
-                    onClose={() => {
-                        setLoading(true);
-                        setShowModal(false)
-                        router.push('/pages/account/dashboard/')
-                    }}
-                    error={error}
-                />
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6"
+        >
+            {!isAdmin && showModal && !isVerified ? (
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                >
+                    <PasswordModal
+                        onVerify={verifyPassword}
+                        onClose={() => {
+                            setLoading(true);
+                            setShowModal(false)
+                            router.push('/pages/account/dashboard/')
+                        }}
+                        error={error}
+                    />
+                </motion.div>
             ) : isVerified ? (
-                    <div className="max-w-6xl mx-auto">
-                        {isAdmin && (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                                    Update Attendance Password
-                                </h2>
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex-1 relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={newPassword}
-                                            onChange={(e) => {
-                                                setNewPassword(e.target.value);
-                                                setPasswordError('');
-                                            }}
-                                            placeholder="Enter new password"
-                                            className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
-                                        >
-                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </button>
-                                    </div>
+                <div className="max-w-7xl mx-auto">
+                    {isAdmin && (
+                        <motion.div
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl p-6 mb-6"
+                        >
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                                Update Attendance Password
+                            </h2>
+                            <div className="flex items-center space-x-4">
+                                <div className="flex-1 relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => {
+                                            setNewPassword(e.target.value);
+                                            setPasswordError('');
+                                        }}
+                                        placeholder="Enter new password"
+                                        className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    />
                                     <button
-                                        onClick={handlePasswordChange}
-                                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
                                     >
-                                        Update Password
+                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
                                     </button>
                                 </div>
-                                {passwordError && (
-                                    <p className="mt-2 text-red-500 text-sm">{passwordError}</p>
-                                )}
-                                {passwordUpdateSuccess && (
-                                    <p className="mt-2 text-green-500 text-sm">
-                                        Password updated successfully!
-                                    </p>
-                                )}
+                                <button
+                                    onClick={handlePasswordChange}
+                                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                >
+                                    Update Password
+                                </button>
                             </div>
-                        )}
+                            {passwordError && (
+                                <p className="mt-2 text-red-500 text-sm">{passwordError}</p>
+                            )}
+                            {passwordUpdateSuccess && (
+                                <p className="mt-2 text-green-500 text-sm">
+                                    Password updated successfully!
+                                </p>
+                            )}
+                        </motion.div>
+                    )}
 
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Take Attendance</h1>
-                    
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <select
+                    <div className="flex justify-between items-center mb-6">
+                        <motion.h1
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            className="text-3xl font-bold text-gray-800 dark:text-white"
+                        >
+                            Take Attendance
+                        </motion.h1>
+
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={markAllHoliday}
+                            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-all duration-200"
+                        >
+                            <FaUmbrella />
+                            Mark All Holiday
+                        </motion.button>
+                    </div>
+
+                    <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl p-4 sm:p-6"
+                    >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                            <motion.select
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 value={selectedClass}
                                 onChange={(e) => setSelectedClass(e.target.value)}
-                                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200"
                             >
                                 <option value="">Select Class</option>
                                 {classes.map(className => (
                                     <option key={className} value={className}>{className}</option>
                                 ))}
-                            </select>
+                            </motion.select>
 
-                            <input
+                            <motion.input
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 type="date"
-                                    className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
                             />
                         </div>
 
                         {(loading || loadingExisting) ? (
-                            <div className="text-center py-4">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-center py-8"
+                            >
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+                                <p className="mt-4 text-gray-600 dark:text-gray-400">
                                     {loading ? 'Loading students...' : 'Loading existing attendance...'}
                                 </p>
-                            </div>
+                            </motion.div>
                         ) : (
-                            <>
-                                <div className="overflow-x-auto">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="overflow-x-auto"
+                                >
                                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                         <thead>
                                             <tr>
@@ -318,43 +359,79 @@ const Attendance = ({ isAdmin }) => {
                                                         <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{student.rollNumber}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{student.name}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
-                                                            <button
-                                                                onClick={() => handleAttendance(student.id)}
-                                                                className={`p-2 rounded-full ${
-                                                                    attendance[student.id]
-                                                                        ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400'
-                                                                        : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400'
-                                                                }`}
-                                                            >
-                                                                {attendance[student.id] ? <FaCheck /> : <FaTimes />}
-                                                            </button>
+                                                            <div className="flex space-x-2">
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.9 }}
+                                                                    onClick={() => handleAttendance(student.id, 'present')}
+                                                                    className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === 'present'
+                                                                            ? 'bg-green-500 text-white'
+                                                                            : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                                                        }`}
+                                                                    title="Present"
+                                                                >
+                                                                    <FaCheck />
+                                                                </motion.button>
+
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.9 }}
+                                                                    onClick={() => handleAttendance(student.id, 'absent')}
+                                                                    className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === 'absent'
+                                                                            ? 'bg-red-500 text-white'
+                                                                            : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                                        }`}
+                                                                    title="Absent"
+                                                                >
+                                                                    <FaTimes />
+                                                                </motion.button>
+
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.9 }}
+                                                                    onClick={() => handleAttendance(student.id, 'holiday')}
+                                                                    className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === 'holiday'
+                                                                            ? 'bg-amber-500 text-white'
+                                                                            : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                                                                        }`}
+                                                                    title="Holiday"
+                                                                >
+                                                                    <FaUmbrella />
+                                                                </motion.button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))
                                             )}
                                         </tbody>
                                     </table>
-                                </div>
+                                </motion.div>
 
-                                <div className="mt-6 flex justify-between items-center">
+                                <motion.div
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4"
+                                >
                                     {existingAttendance && (
-                                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                        <span className="text-amber-600 dark:text-amber-400 font-medium text-center sm:text-left">
                                             Editing existing attendance for {format(new Date(selectedDate), 'dd MMM yyyy')}
                                         </span>
                                     )}
-                                    <button
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={saveAttendance}
-                                        className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                        className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3 rounded-lg hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200"
                                     >
                                         {existingAttendance ? 'Update Attendance' : 'Save Attendance'}
-                                    </button>
-                                </div>
-                            </>
+                                    </motion.button>
+                                </motion.div>
+                            </AnimatePresence>
                         )}
-                    </div>
+                    </motion.div>
                 </div>
             ) : null}
-        </div>
+        </motion.div>
     );
 };
 

@@ -62,7 +62,7 @@ export default function Navigation() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Image src="/images/logos/transparent/3.png" alt="Vision Academy Logo" width={50} height={50} className="mr-2 rounded-full" />
-              <span className="text-black dark:text-white font-bold text-xl">The Vision Academy</span>
+              <span className="text-black dark:text-white font-bold text-lg md:text-lg lg:text-xl">The Vision Academy</span>
             </Link>
           </div>
           <div className="hidden md:flex items-center space-x-4">

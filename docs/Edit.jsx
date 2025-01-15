@@ -254,7 +254,7 @@ const PaymentsRequest = () => {
         }
         setLoading(true);
         router.push(
-          `/pages/account/dashboard/students/paymentReceipt/${studentId}/${receiptNumber}`
+            `/pages/account/dashboard/students/paymentReceipt/${studentId}/${receiptNumber}`
         );
     };
 

@@ -1,10 +1,9 @@
 "use client"
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { auth, database, storage } from '@/lib/firebase';
-import { ref, push, set } from 'firebase/database';
+import { storage } from '@/lib/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import axios from 'axios';
 
 export default function AddUsers() {
     const [loading, setLoading] = useState(false);
@@ -25,7 +24,28 @@ export default function AddUsers() {
             facebook: '',
             instagram: '',
             linkedin: ''
-        }
+        },
+        rollNumber: '',
+        dateOfJoining: new Date().toISOString().split('T')[0],
+        fatherName: '',
+        motherName: '',
+        addressPermanent: '',
+        pincodePermanent: '',
+        addressCurrent: '',
+        pincodeCurrent: '',
+        sameAsPermament: false,
+        session: new Date().getFullYear(),
+        nationality: 'India',
+        dateOfBirth: '',
+        board: 'CBSE',
+        aadharNumber: '',
+        bloodGroup: '',
+        category: 'General',
+        religion: '',
+        gender: 'Male',
+        contactPersonal: '',
+        contactParents: '',
+        schoolName: ''
     });
 
     const handleImageUpload = async (e) => {
@@ -45,56 +65,57 @@ export default function AddUsers() {
         }
     };
 
-    const generateTempPassword = () => {
-        return Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            // Create authentication account
-            const tempPassword = generateTempPassword();
-            let userCredential;
-            try {
-                userCredential = await createUserWithEmailAndPassword(auth, formData.email, tempPassword);
-            } catch (error) {
-                if (error.code === 'auth/email-already-in-use') {
-                    throw new Error('User already exists');
-                }
-                throw error;
-            }
-
-            // Send verification email
-            await sendEmailVerification(userCredential.user);
-            setUid(userCredential.user.uid);
+            // Send data to API route
+            const response = await axios.post('/api/account/dashboard/admin/users/addUsers', formData);
             
-
-            // Add user data to database
-            const dbRef = ref(database, "users/" + userCredential.user.uid);
-            await set(dbRef, formData);
-
-            // Reset form
-            setFormData({
-                name: '',
-                email: '',
-                role: 'teacher', // default role
-                subject: '',
-                class: '',
-                phone: '',
-                whatsapp: '',
-                about: '',
-                photoURL: '/images/default-profile-picture-png.png',
-                socialLinks: {
-                    facebook: '',
-                    instagram: '',
-                    linkedin: ''
-                }
-            });
-
-            alert('User added successfully and verification email sent!');
+            if (response.status === 201) {
+                setUid(response.data.uid);
+                // Reset form
+                setFormData({
+                    name: '',
+                    email: '',
+                    role: 'teacher',
+                    subject: '',
+                    class: '',
+                    phone: '',
+                    whatsapp: '',
+                    about: '',
+                    photoURL: '/images/default-profile-picture-png.png',
+                    socialLinks: {
+                        facebook: '',
+                        instagram: '',
+                        linkedin: ''
+                    },
+                    rollNumber: '',
+                    dateOfJoining: new Date().toISOString().split('T')[0],
+                    fatherName: '',
+                    motherName: '',
+                    addressPermanent: '',
+                    pincodePermanent: '',
+                    addressCurrent: '',
+                    pincodeCurrent: '',
+                    sameAsPermament: false,
+                    session: new Date().getFullYear(),
+                    nationality: 'India',
+                    dateOfBirth: '',
+                    board: 'CBSE',
+                    aadharNumber: '',
+                    bloodGroup: '',
+                    category: 'General',
+                    religion: '',
+                    gender: 'Male',
+                    contactPersonal: '',
+                    contactParents: '',
+                    schoolName: ''
+                });
+                alert('User added successfully and verification email sent!');
+            }
         } catch (error) {
-            setError(error.message);
+            setError(error.response?.data?.error || 'Failed to add user');
         } finally {
             setLoading(false);
         }
@@ -108,12 +129,32 @@ export default function AddUsers() {
         setFormData(prev => ({ ...prev, role: role }));
     };
 
+    // Add handler for same as permanent address
+    const handleSameAddress = (e) => {
+        if (e.target.checked) {
+            setFormData(prev => ({
+                ...prev,
+                sameAsPermament: true,
+                addressCurrent: prev.addressPermanent,
+                pincodeCurrent: prev.pincodePermanent
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                sameAsPermament: false,
+                addressCurrent: '',
+                pincodeCurrent: ''
+            }));
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-6">
+            
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-[1rem]"
             >
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                     Add New User
@@ -215,14 +256,229 @@ export default function AddUsers() {
                                 required
                             />
                         ) : userType === 'students' ? (
-                            <input
-                                type="text"
-                                placeholder="Class"
-                                value={formData.class}
-                                onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500"
-                                required
-                            />
+                            <>
+                                <input
+                                    type="text"
+                                    placeholder="Class"
+                                    value={formData.class}
+                                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500"
+                                    required
+                                />
+
+                                <input
+                                    type="date"
+                                    value={formData.dateOfJoining}
+                                    onChange={(e) => setFormData({ ...formData, dateOfJoining: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="number"
+                                    placeholder="Roll Number"
+                                    value={formData.rollNumber}
+                                    onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="Father's Name"
+                                    value={formData.fatherName}
+                                    onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="Mother's Name (Optional)"
+                                    value={formData.motherName}
+                                    onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                />
+
+                                <textarea
+                                    placeholder="Permanent Address"
+                                    value={formData.addressPermanent}
+                                    onChange={(e) => setFormData({ ...formData, addressPermanent: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                    rows={3}
+                                />
+
+                                <input
+                                    type="number"
+                                    placeholder="Permanent Address Pincode"
+                                    value={formData.pincodePermanent}
+                                    onChange={(e) => setFormData({ ...formData, pincodePermanent: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="sameAddress"
+                                        checked={formData.sameAsPermament}
+                                        onChange={handleSameAddress}
+                                        className="rounded border-gray-300"
+                                    />
+                                    <label htmlFor="sameAddress">Same as Permanent Address</label>
+                                </div>
+
+                                {!formData.sameAsPermament && (
+                                    <>
+                                        <textarea
+                                            placeholder="Current Address"
+                                            value={formData.addressCurrent}
+                                            onChange={(e) => setFormData({ ...formData, addressCurrent: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                            required
+                                            rows={3}
+                                        />
+
+                                        <input
+                                            type="number"
+                                            placeholder="Current Address Pincode"
+                                            value={formData.pincodeCurrent}
+                                            onChange={(e) => setFormData({ ...formData, pincodeCurrent: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                            required
+                                        />
+                                    </>
+                                )}
+
+                                {/* Additional Fields */}
+                                <input
+                                    type="number"
+                                    placeholder="Session Year"
+                                    value={formData.session}
+                                    onChange={(e) => setFormData({ ...formData, session: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="date"
+                                    placeholder="Date of Birth"
+                                    value={formData.dateOfBirth}
+                                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">Board</label>
+                                    <div className="space-x-4">
+                                        {['CBSE', 'BSEB', 'OTHER'].map((board) => (
+                                            <label key={board} className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    value={board}
+                                                    checked={formData.board === board}
+                                                    onChange={(e) => setFormData({ ...formData, board: e.target.value })}
+                                                    className="form-radio"
+                                                />
+                                                <span className="ml-2">{board}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <input
+                                    type="number"
+                                    placeholder="Aadhar Number"
+                                    value={formData.aadharNumber}
+                                    onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    minLength={12}
+                                    maxLength={12}
+                                    required
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="Blood Group (Optional)"
+                                    value={formData.bloodGroup}
+                                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                />
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">Category</label>
+                                    <div className="space-x-4">
+                                        {['General', 'OBC', 'SC/ST'].map((cat) => (
+                                            <label key={cat} className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    value={cat}
+                                                    checked={formData.category === cat}
+                                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                    className="form-radio"
+                                                />
+                                                <span className="ml-2">{cat}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <input
+                                    type="text"
+                                    placeholder="Religion"
+                                    value={formData.religion}
+                                    onChange={(e) => setFormData({ ...formData, religion: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">Gender</label>
+                                    <div className="space-x-4">
+                                        {['Male', 'Female', 'Other'].map((gender) => (
+                                            <label key={gender} className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    value={gender}
+                                                    checked={formData.gender === gender}
+                                                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                                    className="form-radio"
+                                                />
+                                                <span className="ml-2">{gender}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <input
+                                    type="tel"
+                                    placeholder="Personal Contact"
+                                    value={formData.contactPersonal}
+                                    onChange={(e) => setFormData({ ...formData, contactPersonal: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="tel"
+                                    placeholder="Parents Contact"
+                                    value={formData.contactParents}
+                                    onChange={(e) => setFormData({ ...formData, contactParents: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+
+                                <input
+                                    type="text"
+                                    placeholder="School Name"
+                                    value={formData.schoolName}
+                                    onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
+                                    required
+                                />
+                            </>
                         ) : null}
 
                         <input
@@ -298,7 +554,28 @@ export default function AddUsers() {
                                     facebook: '',
                                     instagram: '',
                                     linkedin: ''
-                                }
+                                },
+                                rollNumber: '',
+                                dateOfJoining: new Date().toISOString().split('T')[0],
+                                fatherName: '',
+                                motherName: '',
+                                addressPermanent: '',
+                                pincodePermanent: '',
+                                addressCurrent: '',
+                                pincodeCurrent: '',
+                                sameAsPermament: false,
+                                session: new Date().getFullYear(),
+                                nationality: 'India',
+                                dateOfBirth: '',
+                                board: 'CBSE',
+                                aadharNumber: '',
+                                bloodGroup: '',
+                                category: 'General',
+                                religion: '',
+                                gender: 'Male',
+                                contactPersonal: '',
+                                contactParents: '',
+                                schoolName: ''
                             })}
                             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                         >

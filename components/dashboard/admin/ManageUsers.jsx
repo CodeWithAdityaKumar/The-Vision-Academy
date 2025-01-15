@@ -1,9 +1,10 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { auth, database } from '@/lib/firebase';
+import { database } from '@/lib/firebase';
 import { ref, onValue, remove, update, off } from 'firebase/database';
-import { sendEmailVerification } from 'firebase/auth';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import UpdateUserModal from './UpdateUserModal'; // We'll create this component next
 
 export default function ManageUsers() {
     const [users, setUsers] = useState([]);
@@ -11,9 +12,10 @@ export default function ManageUsers() {
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState({
-        isVerified: 'all',
         role: 'all'
     });
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         setupRealtimeListeners();
@@ -60,16 +62,14 @@ export default function ManageUsers() {
         }
     };
 
-    const handleUpdateRole = async (id, newRole) => {
-        setLoading(true);
-        try {
-            const dbRef = ref(database, `users/${id}`);
-            await update(dbRef, { role: newRole });
-        } catch (error) {
-            setError('Failed to update user role');
-        } finally {
-            setLoading(false);
-        }
+    const handleUpdateClick = (user) => {
+        setSelectedUser(user);
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleUpdateComplete = () => {
+        setIsUpdateModalOpen(false);
+        setSelectedUser(null);
     };
 
     const filterUsers = () => {
@@ -78,16 +78,11 @@ export default function ManageUsers() {
                 user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 user.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const matchesVerification =
-                filters.isVerified === 'all' ? true :
-                    filters.isVerified === 'verified' ? user.emailVerified :
-                        !user.emailVerified;
-
             const matchesRole =
                 filters.role === 'all' ? true :
                     user.role === filters.role;
 
-            return matchesSearch && matchesVerification && matchesRole;
+            return matchesSearch && matchesRole;
         });
     };
 
@@ -118,28 +113,16 @@ export default function ManageUsers() {
                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500"
                     />
 
-                    <div className="flex flex-wrap gap-4">
-                        <select
-                            value={filters.isVerified}
-                            onChange={(e) => setFilters({ ...filters, isVerified: e.target.value })}
-                            className="px-4 py-2 rounded-lg border border-gray-300"
-                        >
-                            <option value="all">All Verification Status</option>
-                            <option value="verified">Verified</option>
-                            <option value="unverified">Unverified</option>
-                        </select>
-
-                        <select
-                            value={filters.role}
-                            onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                            className="px-4 py-2 rounded-lg border border-gray-300"
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="teacher">Teachers</option>
-                            <option value="student">Students</option>
-                            <option value="admin">Admins</option>
-                        </select>
-                    </div>
+                    <select
+                        value={filters.role}
+                        onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                        className="px-4 py-2 rounded-lg border border-gray-300"
+                    >
+                        <option value="all">All Roles</option>
+                        <option value="teacher">Teachers</option>
+                        <option value="student">Students</option>
+                        <option value="admin">Admins</option>
+                    </select>
                 </div>
 
                 {loading ? (
@@ -154,9 +137,6 @@ export default function ManageUsers() {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Role
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Verification
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                         Actions
@@ -184,31 +164,31 @@ export default function ManageUsers() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <select
-                                                value={user.role}
-                                                onChange={(e) => handleUpdateRole(user.id, e.target.value)}
-                                                className="px-3 py-1 rounded border border-gray-300"
-                                            >
-                                                <option value="teacher">Teacher</option>
-                                                <option value="student">Student</option>
-                                                <option value="admin">Admin</option>
-                                            </select>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${user.emailVerified
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                {user.emailVerified ? 'Verified' : 'Not Verified'}
+                                            <span className={`px-3 py-1 rounded-full text-xs ${
+                                                user.role === 'admin' 
+                                                    ? 'bg-red-100 text-red-800' 
+                                                    : user.role === 'teacher'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-green-100 text-green-800'
+                                            }`}>
+                                                {user.role}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => handleDelete(user.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                Delete
-                                            </button>
+                                            <div className="flex space-x-4">
+                                                <button
+                                                    onClick={() => handleUpdateClick(user)}
+                                                    className="text-blue-600 hover:text-blue-900"
+                                                >
+                                                    <FaEdit className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(user.id)}
+                                                    className="text-red-600 hover:text-red-900"
+                                                >
+                                                    <FaTrash className="h-5 w-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -217,6 +197,14 @@ export default function ManageUsers() {
                     </div>
                 )}
             </motion.div>
+
+            {isUpdateModalOpen && (
+                <UpdateUserModal
+                    user={selectedUser}
+                    onClose={() => setIsUpdateModalOpen(false)}
+                    onUpdate={handleUpdateComplete}
+                />
+            )}
         </div>
     );
 }
