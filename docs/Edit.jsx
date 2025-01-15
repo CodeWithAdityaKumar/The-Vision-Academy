@@ -1,623 +1,353 @@
-"use client";
-import { useState, useEffect } from "react";
-import { ref, onValue, update } from "firebase/database";
-import { database } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
+"use client"
+import React, { useEffect, useState } from 'react';
+import { auth, database, storage } from '@/lib/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, onValue, update } from 'firebase/database';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { FiMail, FiPhone, FiMessageSquare, FiFacebook, FiInstagram, FiLinkedin, FiEdit, FiSave, FiX } from 'react-icons/fi';
 import { motion } from 'framer-motion';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { EyeIcon, PencilIcon, DocumentTextIcon, UserCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
+const Profile = () => {
+  const [user] = useAuthState(auth);
+  const [profileData, setProfileData] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedData, setEditedData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-const generateReceiptNumber = () => {
-    const date = new Date();
-    return `TVA${date.getFullYear()}${String(date.getMonth() + 1).padStart(
-        2,
-        "0"
-    )}${String(date.getDate()).padStart(2, "0")}${String(
-        date.getHours()
-    ).padStart(2, "0")}${String(date.getMinutes()).padStart(2, "0")}${String(
-        date.getSeconds()
-    ).padStart(2, "0")}`;
-};
-
-const getPreviousMonth = (currentMonth) => {
-    const monthIndex = months.indexOf(currentMonth);
-    return monthIndex === 0 ? null : months[monthIndex - 1];
-};
-
-const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex min-h-screen items-center justify-center p-4">
-                <div className="fixed inset-0 bg-black bg-opacity-30" onClick={onClose} />
-                <div className="relative bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full shadow-xl">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                            {title}
-                        </h3>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-500"
-                        >
-                            <XMarkIcon className="h-6 w-6" />
-                        </button>
-                    </div>
-                    {children}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const PaymentsRequest = () => {
-    const router = useRouter();
-    const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [editingId, setEditingId] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState("all");
-    const [filterClass, setFilterClass] = useState("all");
-    const [selectedMonth, setSelectedMonth] = useState(
-        new Date().toLocaleString("default", { month: "long" })
-    );
-
-    const [editMonthlyFee, setEditMonthlyFee] = useState("");
-    const [editOtherCharges, setEditOtherCharges] = useState("");
-    const [editPaidAmount, setEditPaidAmount] = useState("");
-
-    const [classFees, setClassFees] = useState({});
-    const [editingClassFee, setEditingClassFee] = useState(null);
-    const [newClassFee, setNewClassFee] = useState("");
-
-    const [activeSection, setActiveSection] = useState("students");
-
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState(null);
-
-    const [receipts, setReceipts] = useState({});
-
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: { 
-            opacity: 1,
-            transition: { duration: 0.5, staggerChildren: 0.1 }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: { y: 0, opacity: 1 }
-    };
-
-    const buttonClassName = `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
-        focus:ring-2 focus:ring-offset-2 focus:outline-none`;
-    
-    const activeButtonClassName = `${buttonClassName} bg-blue-600 text-white hover:bg-blue-700
-        focus:ring-blue-500 shadow-lg`;
-    
-    const inactiveButtonClassName = `${buttonClassName} bg-gray-100 text-gray-600
-        hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`;
-
-    useEffect(() => {
-        const studentsRef = ref(database, "users");
-        onValue(studentsRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const studentsList = Object.entries(data)
-                    .filter(([_, user]) => user.role === "student")
-                    .map(([id, user]) => {
-                        const previousMonth = getPreviousMonth(selectedMonth);
-                        const previousMonthDue = previousMonth
-                            ? (user.fees?.[previousMonth]?.monthlyFee || 0) +
-                            (user.fees?.[previousMonth]?.otherCharges || 0) -
-                            (user.fees?.[previousMonth]?.paidAmount || 0)
-                            : 0;
-
-                        return {
-                            id,
-                            name: user.name,
-                            class: user.class,
-                            monthlyFee: classFees[user.class]?.monthlyFee || 0,
-                            otherCharges: user.fees?.[selectedMonth]?.otherCharges || 0,
-                            paidAmount: user.fees?.[selectedMonth]?.paidAmount || 0,
-                            feeStatus: user.fees?.[selectedMonth]?.status || "Unpaid",
-                            previousMonthDue,
-                        };
-                    });
-                setStudents(studentsList);
-            }
-            setLoading(false);
-        });
-    }, [selectedMonth, classFees]);
-
-    useEffect(() => {
-        const classFeesRef = ref(database, "classFees");
-        onValue(classFeesRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                setClassFees(data);
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        const fetchReceipts = async () => {
-            const studentsRef = ref(database, "users");
-            onValue(studentsRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const receiptData = {};
-                    Object.entries(data).forEach(([id, user]) => {
-                        if (user.feeHistory && user.feeHistory[selectedMonth]) {
-                            const monthReceipts = Object.entries(user.feeHistory[selectedMonth]);
-                            if (monthReceipts.length > 0) {
-                                // Get the last receipt number
-                                const lastReceipt = monthReceipts[monthReceipts.length - 1][0];
-                                receiptData[id] = lastReceipt;
-                            }
-                        }
-                    });
-                    setReceipts(receiptData);
-                }
-            });
-        };
-
-        fetchReceipts();
-    }, [selectedMonth]);
-
-    const handleUpdateFee = async (id) => {
-        try {
-            const student = students.find((s) => s.id === id);
-            const monthlyFee = classFees[student.class]?.monthlyFee || 0;
-            const otherCharges = parseInt(editOtherCharges) || 0;
-            const paidAmount = parseInt(editPaidAmount) || 0;
-            const totalDue = monthlyFee + otherCharges - paidAmount;
-
-            const userRef = ref(database, `users/${id}/fees/${selectedMonth}`);
-            const receiptNumber = generateReceiptNumber(); // Generate unique receipt number
-            await update(userRef, {
-                monthlyFee,
-                otherCharges,
-                paidAmount,
-                status: totalDue <= 0 ? "Paid" : "Unpaid",
-                updatedAt: new Date().toISOString(),
-                receiptNumber, // Add receipt number to the update
-            });
-
-            // Create history entry
-            const historyRef = ref(
-                database,
-                `users/${id}/feeHistory/${selectedMonth}/${receiptNumber}`
-            );
-            await update(historyRef, {
-                monthlyFee,
-                otherCharges,
-                paidAmount,
-                status: totalDue <= 0 ? "Paid" : "Unpaid",
-                updatedAt: new Date().toISOString(),
-                receiptNumber,
-            });
-
-            toast.success('Fee updated successfully!');
-            setEditingId(null);
-            resetEditFields();
-        } catch (error) {
-            toast.error('Failed to update fee');
-            setError("Failed to update fee");
-        }
-    };
-
-    const handleUpdateClassFee = async (classNum) => {
-        try {
-            const feeAmount = parseInt(newClassFee) || 0;
-            const classFeesRef = ref(database, `classFees/${classNum}`);
-            await update(classFeesRef, { monthlyFee: feeAmount });
-            toast.success('Class fee updated successfully!');
-            setEditingClassFee(null);
-            setNewClassFee("");
-        } catch (error) {
-            toast.error('Failed to update class fee');
-            setError("Failed to update class fee");
-        }
-    };
-
-    const resetEditFields = () => {
-        setEditMonthlyFee("");
-        setEditOtherCharges("");
-        setEditPaidAmount("");
-    };
-
-    const handleViewReceipt = (studentId, month) => {
-        const receiptNumber = receipts[studentId];
-        if (!receiptNumber) {
-            toast.error('No receipt found for this month');
-            return;
-        }
-        setLoading(true);
-        router.push(
-            `/pages/account/dashboard/students/paymentReceipt/${studentId}/${receiptNumber}`
-        );
-    };
-
-    const handleView = (student) => {
-        setSelectedStudent(student);
-        setIsViewModalOpen(true);
-    };
-
-    const handleEdit = (student) => {
-        setSelectedStudent(student);
-        setEditMonthlyFee(student.monthlyFee.toString());
-        setEditOtherCharges(student.otherCharges.toString());
-        setEditPaidAmount(student.paidAmount.toString());
-        setIsEditModalOpen(true);
-    };
-
-    const handleUpdateFeeModal = async () => {
-        await handleUpdateFee(selectedStudent.id);
-        setIsEditModalOpen(false);
-    };
-
-    const filteredStudents = students.filter((student) => {
-        const matchesSearch = student.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
-        const matchesStatus =
-            filterStatus === "all" || student.feeStatus === filterStatus;
-        const matchesClass = filterClass === "all" || student.class === filterClass;
-        return matchesSearch && matchesStatus && matchesClass;
-    });
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-            </div>
-        );
+  useEffect(() => {
+    if (user) {
+      const userRef = ref(database, `users/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val();
+        setProfileData(data);
+        setEditedData(data);
+        setLoading(false);
+      });
     }
+  }, [user]);
 
-    return (
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-            className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 md:p-8"
-        >
-            <ToastContainer position="top-right" theme="colored" />
-            
-            <motion.div
-                variants={itemVariants}
-                className="max-w-7xl mx-auto backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-2xl overflow-hidden"
+  // Add handleImageUpload function
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLoading(true);
+      try {
+        const storageReference = storageRef(storage, `profile-photos/${user.uid}-${Date.now()}-${file.name}`);
+        await uploadBytes(storageReference, file);
+        const downloadURL = await getDownloadURL(storageReference);
+
+        // Update both local state and database
+        const userRef = ref(database, `users/${user.uid}`);
+        await update(userRef, { ...editedData, photoURL: downloadURL });
+        setEditedData(prev => ({ ...prev, photoURL: downloadURL }));
+        setProfileData(prev => ({ ...prev, photoURL: downloadURL }));
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleEdit = () => {
+    setEditMode(true);
+  };
+
+  const handleCancel = () => {
+    setEditedData(profileData);
+    setEditMode(false);
+  };
+
+  const handleSave = async () => {
+    try {
+      const userRef = ref(database, `users/${user.uid}`);
+      await update(userRef, editedData);
+      setProfileData(editedData);
+      setEditMode(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSocialLinkChange = (platform, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        [platform]: value
+      }
+    }));
+  };
+
+  return (
+    <div className="min-h-screen  py-12 px-4 sm:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto"
+      >
+        <div className="backdrop-blur-md bg-white-900 dark:bg-black-800 rounded-2xl shadow-xl dark:shadow-blue-500-10 p-6 md:p-8 relative border border-gray-100 dark:border-gray-800">
+          {!editMode ? (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleEdit}
+              className="absolute top-4 right-4 p-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
             >
-                <h2 className="text-2xl sm:text-3xl font-bold p-6 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">
-                    Student Fees Management
-                </h2>
+              <FiEdit size={20} />
+            </motion.button>
+          ) : (
+            <div className="absolute top-4 right-4 flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSave}
+                className="p-2 text-green-500 dark:text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-all duration-300"
+              >
+                <FiSave size={20} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleCancel}
+                className="p-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-300"
+              >
+                <FiX size={20} />
+              </motion.button>
+            </div>
+          )}
 
-                {/* Toggle Buttons */}
-                <div className="flex flex-wrap gap-3 p-6 border-b border-gray-200 dark:border-gray-700">
-                    <button
-                        onClick={() => setActiveSection("students")}
-                        className={activeSection === "students" ? activeButtonClassName : inactiveButtonClassName}
-                    >
-                        Edit Student Fees
-                    </button>
-                    <button
-                        onClick={() => setActiveSection("classFees")}
-                        className={activeSection === "classFees" ? activeButtonClassName : inactiveButtonClassName}
-                    >
-                        Edit Class Fees
-                    </button>
-                </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center mb-8"
+          >
+            <div className="relative group">
+              <motion.img
+                whileHover={{ scale: 1.05 }}
+                src={editedData?.photoURL || '/images/default-profile-picture-png.png'}
+                alt="Profile"
+                className="h-32 w-32 md:h-40 md:w-40 rounded-full object-cover border-4 border-gray-200 dark:border-gray-800 transition-all duration-300 group-hover:border-blue-500 dark:group-hover:border-blue-400"
+              />
+              {editMode && (
+                <motion.label
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  htmlFor="photo-upload"
+                  className="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-300 shadow-lg"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </motion.label>
+              )}
+              <input
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-4 text-2xl md:text-3xl font-bold text-gray-800 dark:text-white"
+            >
+              {profileData?.name}
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-blue-600 font-medium tracking-wide"
+            >
+              {profileData?.role.toUpperCase()}
+            </motion.p>
+          </motion.div>
 
-                {/* Content Section */}
-                <div className="p-6">
-                    {activeSection === "classFees" ? (
-                        // Class Fees Section
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="space-y-6"
-                        >
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                                Class-wise Monthly Fees
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {[5, 6, 7, 8, 9, 10, 11, 12].map((classNum) => (
-                                    <div
-                                        key={classNum}
-                                        className="p-4 border rounded-lg dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-colors bg-white dark:bg-gray-800 shadow-md hover:shadow-lg"
-                                    >
-                                        <h4 className="font-semibold mb-2">Class {classNum}</h4>
-                                        {editingClassFee === classNum ? (
-                                            <div className="flex space-x-2">
-                                                <input
-                                                    type="number"
-                                                    value={newClassFee}
-                                                    onChange={(e) => setNewClassFee(e.target.value)}
-                                                    className="w-24 border rounded px-2 py-1 dark:bg-gray-700 dark:text-white"
-                                                />
-                                                <button
-                                                    onClick={() => handleUpdateClassFee(classNum)}
-                                                    className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                                                >
-                                                    Save
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingClassFee(null);
-                                                        setNewClassFee("");
-                                                    }}
-                                                    className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex justify-between items-center">
-                                                <span>₹{classFees[classNum]?.monthlyFee || 0}</span>
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingClassFee(classNum);
-                                                        setNewClassFee(
-                                                            (classFees[classNum]?.monthlyFee || 0).toString()
-                                                        );
-                                                    }}
-                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                                >
-                                                    Edit
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    ) : (
-                        // Students Section
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="space-y-6"
-                        >
-                            {/* Controls Section */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                                <select
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="form-select rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                                >
-                                    {months.map((month) => (
-                                        <option key={month} value={month}>
-                                            {month}
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="text"
-                                    placeholder="Search by name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="form-input rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                                />
-                                <select
-                                    value={filterClass}
-                                    onChange={(e) => setFilterClass(e.target.value)}
-                                    className="form-select rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                                >
-                                    <option value="all">All Classes</option>
-                                    {[5, 6, 7, 8, 9, 10, 11, 12].map((classNum) => (
-                                        <option key={classNum} value={`${classNum}`}>
-                                            Class {classNum}
-                                        </option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                    className="form-select rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                                >
-                                    <option value="all">All Status</option>
-                                    <option value="Paid">Paid</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                </select>
-                            </div>
-
-                            {/* Student Cards Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {filteredStudents.map((student) => (
-                                    <motion.div
-                                        key={student.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="bg-white dark:bg-gray-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                                    >
-                                        <div className="p-5">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="flex-shrink-0">
-                                                    <UserCircleIcon className="h-12 w-12 text-gray-400" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                                                        {student.name}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        Class {student.class}
-                                                    </p>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${
-                                                        student.feeStatus === "Paid"
-                                                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200"
-                                                            : "bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200"
-                                                    }`}>
-                                                        {student.feeStatus}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="mt-4 flex justify-around border-t pt-4 dark:border-gray-600">
-                                                <button
-                                                    onClick={() => handleView(student)}
-                                                    className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                                                >
-                                                    <EyeIcon className="h-5 w-5 mr-1" />
-                                                    <span className="text-sm">View</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(student)}
-                                                    className="flex items-center text-emerald-600 hover:text-emerald-800 dark:text-emerald-400"
-                                                >
-                                                    <PencilIcon className="h-5 w-5 mr-1" />
-                                                    <span className="text-sm">Edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleViewReceipt(student.id, selectedMonth)}
-                                                    className={`flex items-center ${
-                                                        receipts[student.id]
-                                                            ? "text-purple-600 hover:text-purple-800 dark:text-purple-400"
-                                                            : "text-gray-400 cursor-not-allowed"
-                                                    }`}
-                                                    disabled={!receipts[student.id]}
-                                                    title={!receipts[student.id] ? "No receipt available" : "View receipt"}
-                                                >
-                                                    <DocumentTextIcon className="h-5 w-5 mr-1" />
-                                                    <span className="text-sm">Receipt</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
+            >
+              <FiMail className="text-blue-500 dark:text-blue-400 text-xl" />
+              <div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Email</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.email}</p>
+              </div>
             </motion.div>
 
-            {/* View Modal */}
-            <Modal
-                isOpen={isViewModalOpen}
-                onClose={() => setIsViewModalOpen(false)}
-                title="Student Details"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
             >
-                {selectedStudent && (
-                    <div className="space-y-4">
-                        <div>
-                            <label className="font-medium">Name:</label>
-                            <p>{selectedStudent.name}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Class:</label>
-                            <p>{selectedStudent.class}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Monthly Fee:</label>
-                            <p>₹{selectedStudent.monthlyFee}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Other Charges:</label>
-                            <p>₹{selectedStudent.otherCharges}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Previous Month Due:</label>
-                            <p>₹{selectedStudent.previousMonthDue}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Paid Amount:</label>
-                            <p>₹{selectedStudent.paidAmount}</p>
-                        </div>
-                        <div>
-                            <label className="font-medium">Status:</label>
-                            <p>{selectedStudent.feeStatus}</p>
-                        </div>
-                    </div>
+              <FiPhone className="text-blue-500 dark:text-blue-400 text-xl" />
+              <div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Phone</p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={editedData?.phone || ''}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                  />
+                ) : (
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.phone || 'Not provided'}</p>
                 )}
-            </Modal>
+              </div>
+            </motion.div>
 
-            {/* Edit Modal */}
-            <Modal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                title="Edit Fee Details"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
             >
-                {selectedStudent && (
-                    <>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Monthly Fee
-                                </label>
-                                <p className="text-gray-600">₹{selectedStudent.monthlyFee}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Other Charges
-                                </label>
-                                <input
-                                    type="number"
-                                    value={editOtherCharges}
-                                    onChange={(e) => setEditOtherCharges(e.target.value)}
-                                    className="w-full rounded-lg border p-2 dark:bg-gray-700 dark:border-gray-600"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Paid Amount
-                                </label>
-                                <input
-                                    type="number"
-                                    value={editPaidAmount}
-                                    onChange={(e) => setEditPaidAmount(e.target.value)}
-                                    className="w-full rounded-lg border p-2 dark:bg-gray-700 dark:border-gray-600"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-6 flex space-x-4">
-                            <button
-                                onClick={handleUpdateFeeModal}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                            >
-                                Save Changes
-                            </button>
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </>
+              <FiMessageSquare className="text-blue-500 dark:text-blue-400 text-xl" />
+              <div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">WhatsApp</p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={editedData?.whatsapp || ''}
+                    onChange={(e) => handleChange('whatsapp', e.target.value)}
+                    className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                  />
+                ) : (
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.whatsapp || 'Not provided'}</p>
                 )}
-            </Modal>
+              </div>
+            </motion.div>
 
-            {error && (
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-4 text-rose-600 dark:text-rose-400 text-center font-medium"
-                >
-                    {error}
-                </motion.p>
+            {profileData?.role === 'teacher' && (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
+              >
+                <span className="text-blue-500 text-xl">📚</span>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Subject</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.subject || 'Not provided'}</p>
+                </div>
+              </motion.div>
             )}
-        </motion.div>
-    );
+
+            {profileData?.role === 'student' && (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
+              >
+                <span className="text-blue-500 text-xl">🎓</span>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Class</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.class || 'Not provided'}</p>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="space-y-4 mt-8"
+          >
+            <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-800 pb-2">
+              Social Media Links
+            </h4>
+            <div className="flex flex-wrap items-center gap-4 mt-6">
+              {editMode ? (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <FiFacebook className="text-blue-500 text-xl" />
+                    <input
+                      type="text"
+                      value={editedData?.socialLinks?.facebook || ''}
+                      onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
+                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                      placeholder="Facebook URL"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <FiInstagram className="text-blue-500 text-xl" />
+                    <input
+                      type="text"
+                      value={editedData?.socialLinks?.instagram || ''}
+                      onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
+                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                      placeholder="Instagram URL"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <FiLinkedin className="text-blue-500 text-xl" />
+                    <input
+                      type="text"
+                      value={editedData?.socialLinks?.linkedin || ''}
+                      onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)}
+                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                      placeholder="LinkedIn URL"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {profileData?.socialLinks?.facebook && (
+                    <a
+                      href={profileData.socialLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+                    >
+                      <FiFacebook className="text-xl" />
+                    </a>
+                  )}
+                  {profileData?.socialLinks?.instagram && (
+                    <a
+                      href={profileData.socialLinks.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+                    >
+                      <FiInstagram className="text-xl" />
+                    </a>
+                  )}
+                  {profileData?.socialLinks?.linkedin && (
+                    <a
+                      href={profileData.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+                    >
+                      <FiLinkedin className="text-xl" />
+                    </a>
+                  )}
+                </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/90 flex items-center justify-center backdrop-blur-sm">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full shadow-lg"
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default PaymentsRequest;
+export default Profile;

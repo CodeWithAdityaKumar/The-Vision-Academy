@@ -16,7 +16,7 @@ const PasswordModal = ({ onVerify, onClose, error }) => {
             animate={{ opacity: 1 }}
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
         >
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96 mx-[1.5rem]">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                     Enter Attendance Password
                 </h2>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
 
@@ -33,7 +33,7 @@ const PaymentReceipt = ({ userId, receiptNumber }) => {
 
     const handlePrint = () => {
         if (iframeRef.current) {
-            alert('Printing receipt Please Wait...');
+            alert(`Printing receipt Please Wait...,${userId},${receiptNumber}`);
             iframeRef.current.src = `/receipt/receipt.html?userId=${userId}&receiptNumber=${receiptNumber}`;
         }
         
