@@ -5,11 +5,50 @@ import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'fi
 import axios from 'axios';
 import { FaTimes } from 'react-icons/fa';
 import Image from 'next/image';
+import { toast } from 'react-hot-toast';
 
 export default function UpdateUserModal({ user, onClose, onUpdate }) {
     const [formData, setFormData] = useState(user);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [userType, setUserType] = useState('');
+
+    const handleRoleChange = (newRole) => {
+        if (window.confirm(`Are you sure you want to change user role to ${newRole}? This action cannot be undone.`)) {
+            const roleMap = {
+                'admin': { role: 'admin', userType: 'admin' },
+                'teacher': { role: 'teacher', userType: 'teachers' },
+                'student': { role: 'student', userType: 'students' }
+            };
+
+            setFormData(prev => ({
+                ...prev,
+                role: roleMap[newRole].role,
+                // Clear role-specific fields when changing roles
+                ...(newRole === 'student' ? {
+                    class: '',
+                    rollNumber: '',
+                    fatherName: '',
+                    motherName: '',
+                    // ...other student specific fields
+                } : newRole === 'teacher' ? {
+                    subject: '',
+                    // Clear student specific fields
+                    class: '',
+                    rollNumber: '',
+                    // ...other fields to clear
+                } : {
+                    // Clear all role-specific fields for admin
+                    subject: '',
+                    class: '',
+                    rollNumber: '',
+                    // ...other fields to clear
+                })
+            }));
+            setUserType(roleMap[newRole].userType);
+            toast.success(`User role changed to ${newRole}`);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -76,7 +115,7 @@ export default function UpdateUserModal({ user, onClose, onUpdate }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 mt-40">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 mt-28 lg:mt-16 md:mt-16 ">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b dark:border-gray-700 flex justify-between items-center z-40">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Update User</h2>
@@ -92,15 +131,11 @@ export default function UpdateUserModal({ user, onClose, onUpdate }) {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                       
+
                         <div className="flex flex-col items-center space-y-4">
                             <div className="relative">
-                                {/* <img
-                                    src={formData.photoURL || '/images/default-profile-picture-png.png'}
-                                    alt="Profile Preview"
-                                    className="h-32 w-32 rounded-full object-cover border-4 border-gray-200"
-                                /> */}
-
                                 <Image src={formData.photoURL || '/images/default-profile-picture-png.png'}
                                 alt="Profile Preview"
                                     className="h-32 w-32 rounded-full object-cover border-4 border-gray-200" width={100} height={100}/>
@@ -434,20 +469,63 @@ export default function UpdateUserModal({ user, onClose, onUpdate }) {
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-4">
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-4">User Role</h3>
+                            <div className="flex flex-wrap gap-4">
+                                {[
+                                    { role: 'admin', label: 'Admin', color: 'red' },
+                                    { role: 'teacher', label: 'Teacher', color: 'blue' },
+                                    { role: 'student', label: 'Student', color: 'green' }
+                                ].map(({ role, label, color }) => (
+                                    <button
+                                        key={role}
+                                        type="button"
+                                        onClick={() => handleRoleChange(role)}
+                                        className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${formData.role === role
+                                                ? `bg-${color}-600 text-white ring-2 ring-${color}-600 ring-offset-2`
+                                                : `bg-gray-100 text-gray-700 hover:bg-${color}-50 hover:text-${color}-600`
+                                            }`}
+                                    >
+                                        {formData.role === role && (
+                                            <span className="absolute -top-1 -right-1 h-3 w-3">
+                                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-${color}-400 opacity-75`}></span>
+                                                <span className={`relative inline-flex rounded-full h-3 w-3 bg-${color}-500`}></span>
+                                            </span>
+                                        )}
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                {formData.role !== user.role ? (
+                                    <span className="text-amber-600 dark:text-amber-400">
+                                        ⚠️ Changing role will reset role-specific information
+                                    </span>
+                                ) : (
+                                    <span>Current role: {formData.role}</span>
+                                )}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                className="w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
+                                className={`w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base rounded-lg ${
+                                    formData.role !== user.role
+                                        ? 'bg-amber-600 hover:bg-amber-700'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                } text-white disabled:opacity-50 transition-colors`}
                                 disabled={loading}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
-                                {loading ? 'Updating...' : 'Update User'}
+                                {loading ? "Updating..." : formData.role !== user.role ? "Update & Change Role" : "Update User"}
                             </button>
                         </div>
                     </form>

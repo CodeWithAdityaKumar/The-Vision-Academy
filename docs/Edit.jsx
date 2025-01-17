@@ -1,353 +1,479 @@
-"use client"
-import React, { useEffect, useState } from 'react';
-import { auth, database, storage } from '@/lib/firebase';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ref, onValue, update } from 'firebase/database';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { FiMail, FiPhone, FiMessageSquare, FiFacebook, FiInstagram, FiLinkedin, FiEdit, FiSave, FiX } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+"use client";
+import React, { useState, useEffect } from "react";
+import { ref, get, set, getDatabase } from "firebase/database";
+import { format } from "date-fns";
+import {
+  FaCheck,
+  FaEye,
+  FaEyeSlash,
+  FaTimes,
+  FaUmbrella,
+} from "react-icons/fa";
+import { onValue } from "firebase/database";
+import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import PasswordModal from "@/components/dashboard/teacher/attendance/PasswordModal";
 
-const Profile = () => {
-  const [user] = useAuthState(auth);
-  const [profileData, setProfileData] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editedData, setEditedData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Attendance = ({ isAdmin }) => {
+  const router = useRouter();
+
+  const { theme } = useTheme();
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [existingAttendance, setExistingAttendance] = useState(null);
+  const [loadingExisting, setLoadingExisting] = useState(false);
+  const [isVerified, setIsVerified] = useState(isAdmin ? true : false);
+  const [showModal, setShowModal] = useState(isAdmin ? false : true);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordUpdateSuccess, setPasswordUpdateSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const classes = [
+    "Class 5",
+    "Class 6",
+    "Class 7",
+    "Class 8",
+    "Class 9",
+    "Class 10",
+    "Class 11",
+    "Class 12",
+  ];
+
+  console.log("isAdmin:", isAdmin);
 
   useEffect(() => {
-    if (user) {
-      const userRef = ref(database, `users/${user.uid}`);
-      onValue(userRef, (snapshot) => {
-        const data = snapshot.val();
-        setProfileData(data);
-        setEditedData(data);
-        setLoading(false);
-      });
-    }
-  }, [user]);
+    const db = getDatabase();
+    const passwordRef = ref(db, "settings/attendancePassword");
 
-  // Add handleImageUpload function
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setLoading(true);
-      try {
-        const storageReference = storageRef(storage, `profile-photos/${user.uid}-${Date.now()}-${file.name}`);
-        await uploadBytes(storageReference, file);
-        const downloadURL = await getDownloadURL(storageReference);
-
-        // Update both local state and database
-        const userRef = ref(database, `users/${user.uid}`);
-        await update(userRef, { ...editedData, photoURL: downloadURL });
-        setEditedData(prev => ({ ...prev, photoURL: downloadURL }));
-        setProfileData(prev => ({ ...prev, photoURL: downloadURL }));
-      } catch (error) {
-        console.error("Error uploading image:", error);
-      } finally {
-        setLoading(false);
+    onValue(passwordRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setNewPassword(snapshot.val());
       }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedClass) {
+      fetchStudents();
     }
-  };
+  }, [selectedClass]);
 
-  const handleEdit = () => {
-    setEditMode(true);
-  };
+  useEffect(() => {
+    if (selectedClass && selectedDate) {
+      fetchExistingAttendance();
+    }
+  }, [selectedClass, selectedDate]);
 
-  const handleCancel = () => {
-    setEditedData(profileData);
-    setEditMode(false);
-  };
+  const fetchStudents = async () => {
+    setLoading(true);
+    const db = getDatabase();
+    const studentsRef = ref(db, "users");
 
-  const handleSave = async () => {
     try {
-      const userRef = ref(database, `users/${user.uid}`);
-      await update(userRef, editedData);
-      setProfileData(editedData);
-      setEditMode(false);
+      const snapshot = await get(studentsRef);
+      if (snapshot.exists()) {
+        const allUsers = Object.entries(snapshot.val()).map(([id, data]) => ({
+          id,
+          ...data,
+        }));
+
+        const filteredStudents = allUsers.filter(
+          (user) =>
+            user.role === "student" &&
+            user.class === selectedClass.replace("Class ", "")
+        );
+
+        setStudents(filteredStudents);
+        initializeAttendance(filteredStudents);
+      }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error fetching students:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (field, value) => {
-    setEditedData(prev => ({
+  const fetchExistingAttendance = async () => {
+    setLoadingExisting(true);
+    const db = getDatabase();
+    const formattedDate = format(new Date(selectedDate), "yyyy-MM-dd");
+    const attendanceRef = ref(
+      db,
+      `attendance/${selectedClass}/${formattedDate}`
+    );
+
+    try {
+      const snapshot = await get(attendanceRef);
+      if (snapshot.exists()) {
+        const existingData = snapshot.val();
+        setAttendance(existingData);
+        setExistingAttendance(true);
+      } else {
+        setExistingAttendance(false);
+        initializeAttendance(students);
+      }
+    } catch (error) {
+      console.error("Error fetching existing attendance:", error);
+    } finally {
+      setLoadingExisting(false);
+    }
+  };
+
+  const initializeAttendance = (studentsData) => {
+    const initialAttendance = {};
+    studentsData.forEach((student) => {
+      initialAttendance[student.id] = "absent"; // Default to absent
+    });
+    setAttendance(initialAttendance);
+  };
+
+  const handleAttendance = (studentId, status) => {
+    setAttendance((prev) => ({
       ...prev,
-      [field]: value
+      [studentId]: status,
     }));
   };
 
-  const handleSocialLinkChange = (platform, value) => {
-    setEditedData(prev => ({
-      ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [platform]: value
+  const saveAttendance = async () => {
+    if (!selectedClass || !selectedDate) {
+      alert("Please select both class and date");
+      return;
+    }
+
+    const db = getDatabase();
+    const formattedDate = format(new Date(selectedDate), "yyyy-MM-dd");
+    const attendanceRef = ref(
+      db,
+      `attendance/${selectedClass}/${formattedDate}`
+    );
+
+    try {
+      await set(attendanceRef, attendance);
+      alert("Attendance saved successfully!");
+    } catch (error) {
+      console.error("Error saving attendance:", error);
+      alert("Error saving attendance");
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!newPassword) {
+      setPasswordError("Password cannot be empty");
+      return;
+    }
+
+    const db = getDatabase();
+    const passwordRef = ref(db, "settings/attendancePassword");
+
+    try {
+      await set(passwordRef, newPassword);
+      setPasswordUpdateSuccess(true);
+      setShowPassword(false);
+      setTimeout(() => setPasswordUpdateSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error updating password:", error);
+      setPasswordError("Failed to update password");
+    }
+  };
+
+  const verifyPassword = async (enteredPassword) => {
+    const db = getDatabase();
+    const passwordRef = ref(db, "settings/attendancePassword");
+
+    try {
+      const snapshot = await get(passwordRef);
+      if (snapshot.exists()) {
+        const correctPassword = snapshot.val();
+        if (enteredPassword === correctPassword) {
+          setIsVerified(true);
+          setShowModal(false);
+        } else {
+          setError("Incorrect password");
+        }
       }
-    }));
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      setError("Failed to verify password");
+    }
+  };
+
+  const markAllHoliday = () => {
+    const updatedAttendance = {};
+    students.forEach((student) => {
+      updatedAttendance[student.id] = "holiday";
+    });
+    setAttendance(updatedAttendance);
   };
 
   return (
-    <div className="min-h-screen  py-12 px-4 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto"
-      >
-        <div className="backdrop-blur-md bg-white-900 dark:bg-black-800 rounded-2xl shadow-xl dark:shadow-blue-500-10 p-6 md:p-8 relative border border-gray-100 dark:border-gray-800">
-          {!editMode ? (
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEdit}
-              className="absolute top-4 right-4 p-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6"
+    >
+      {!isAdmin && showModal && !isVerified ? (
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+        >
+          <PasswordModal
+            onVerify={verifyPassword}
+            onClose={() => {
+              setLoading(true);
+              setShowModal(false);
+              router.push("/pages/account/dashboard/");
+            }}
+            error={error}
+          />
+        </motion.div>
+      ) : isVerified ? (
+        <div className="max-w-7xl mx-auto">
+          {isAdmin && (
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl p-6 mb-6"
             >
-              <FiEdit size={20} />
-            </motion.button>
-          ) : (
-            <div className="absolute top-4 right-4 flex space-x-2">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSave}
-                className="p-2 text-green-500 dark:text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-all duration-300"
-              >
-                <FiSave size={20} />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleCancel}
-                className="p-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all duration-300"
-              >
-                <FiX size={20} />
-              </motion.button>
-            </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                Update Attendance Password
+              </h2>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1 relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setPasswordError("");
+                    }}
+                    placeholder="Enter new password"
+                    className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+                <button
+                  onClick={handlePasswordChange}
+                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Update Password
+                </button>
+              </div>
+              {passwordError && (
+                <p className="mt-2 text-red-500 text-sm">{passwordError}</p>
+              )}
+              {passwordUpdateSuccess && (
+                <p className="mt-2 text-green-500 text-sm">
+                  Password updated successfully!
+                </p>
+              )}
+            </motion.div>
           )}
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col items-center mb-8"
-          >
-            <div className="relative group">
-              <motion.img
-                whileHover={{ scale: 1.05 }}
-                src={editedData?.photoURL || '/images/default-profile-picture-png.png'}
-                alt="Profile"
-                className="h-32 w-32 md:h-40 md:w-40 rounded-full object-cover border-4 border-gray-200 dark:border-gray-800 transition-all duration-300 group-hover:border-blue-500 dark:group-hover:border-blue-400"
-              />
-              {editMode && (
-                <motion.label
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  htmlFor="photo-upload"
-                  className="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-300 shadow-lg"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </motion.label>
-              )}
-              <input
-                id="photo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-4 text-2xl md:text-3xl font-bold text-gray-800 dark:text-white"
+          <div className="flex justify-between items-center mb-6">
+            <motion.h1
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="text-3xl font-bold text-gray-800 dark:text-white"
             >
-              {profileData?.name}
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-blue-600 font-medium tracking-wide"
+              Take Attendance
+            </motion.h1>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={markAllHoliday}
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-all duration-200"
             >
-              {profileData?.role.toUpperCase()}
-            </motion.p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
-            >
-              <FiMail className="text-blue-500 dark:text-blue-400 text-xl" />
-              <div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">Email</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.email}</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
-            >
-              <FiPhone className="text-blue-500 dark:text-blue-400 text-xl" />
-              <div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">Phone</p>
-                {editMode ? (
-                  <input
-                    type="text"
-                    value={editedData?.phone || ''}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
-                  />
-                ) : (
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.phone || 'Not provided'}</p>
-                )}
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
-            >
-              <FiMessageSquare className="text-blue-500 dark:text-blue-400 text-xl" />
-              <div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">WhatsApp</p>
-                {editMode ? (
-                  <input
-                    type="text"
-                    value={editedData?.whatsapp || ''}
-                    onChange={(e) => handleChange('whatsapp', e.target.value)}
-                    className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
-                  />
-                ) : (
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.whatsapp || 'Not provided'}</p>
-                )}
-              </div>
-            </motion.div>
-
-            {profileData?.role === 'teacher' && (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
-              >
-                <span className="text-blue-500 text-xl">📚</span>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">Subject</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.subject || 'Not provided'}</p>
-                </div>
-              </motion.div>
-            )}
-
-            {profileData?.role === 'student' && (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="flex items-center space-x-3 p-4 rounded-lg bg-gray-50/30 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg dark:hover:bg-gray-900/50 border border-gray-100 dark:border-gray-800"
-              >
-                <span className="text-blue-500 text-xl">🎓</span>
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">Class</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{profileData?.class || 'Not provided'}</p>
-                </div>
-              </motion.div>
-            )}
+              <FaUmbrella />
+              Mark All Holiday
+            </motion.button>
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="space-y-4 mt-8"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl p-4 sm:p-6"
           >
-            <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-800 pb-2">
-              Social Media Links
-            </h4>
-            <div className="flex flex-wrap items-center gap-4 mt-6">
-              {editMode ? (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <FiFacebook className="text-blue-500 text-xl" />
-                    <input
-                      type="text"
-                      value={editedData?.socialLinks?.facebook || ''}
-                      onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
-                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
-                      placeholder="Facebook URL"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <FiInstagram className="text-blue-500 text-xl" />
-                    <input
-                      type="text"
-                      value={editedData?.socialLinks?.instagram || ''}
-                      onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
-                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
-                      placeholder="Instagram URL"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <FiLinkedin className="text-blue-500 text-xl" />
-                    <input
-                      type="text"
-                      value={editedData?.socialLinks?.linkedin || ''}
-                      onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)}
-                      className="w-full px-2 py-1 font-medium border-b border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-transparent dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
-                      placeholder="LinkedIn URL"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {profileData?.socialLinks?.facebook && (
-                    <a
-                      href={profileData.socialLinks.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
-                    >
-                      <FiFacebook className="text-xl" />
-                    </a>
-                  )}
-                  {profileData?.socialLinks?.instagram && (
-                    <a
-                      href={profileData.socialLinks.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
-                    >
-                      <FiInstagram className="text-xl" />
-                    </a>
-                  )}
-                  {profileData?.socialLinks?.linkedin && (
-                    <a
-                      href={profileData.socialLinks.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-300"
-                    >
-                      <FiLinkedin className="text-xl" />
-                    </a>
-                  )}
-                </>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <motion.select
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200"
+              >
+                <option value="">Select Class</option>
+                {classes.map((className) => (
+                  <option key={className} value={className}>
+                    {className}
+                  </option>
+                ))}
+              </motion.select>
+
+              <motion.input
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="date"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
             </div>
+
+            {loading || loadingExisting ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-8"
+              >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600 dark:text-gray-400">
+                  {loading
+                    ? "Loading students..."
+                    : "Loading existing attendance..."}
+                </p>
+              </motion.div>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="overflow-x-auto"
+                >
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                      <tr>
+                        <th className="px-6 py-3 bg-gray-50 dark:bg-gray-700 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Roll No
+                        </th>
+                        <th className="px-6 py-3 bg-gray-50 dark:bg-gray-700 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 bg-gray-50 dark:bg-gray-700 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Attendance
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {students.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="3"
+                            className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+                          >
+                            No students found in {selectedClass}
+                          </td>
+                        </tr>
+                      ) : (
+                        students.map((student) => (
+                          <tr key={student.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                              {student.rollNumber}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
+                              {student.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex space-x-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    handleAttendance(student.id, "present")
+                                  }
+                                  className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === "present"
+                                      ? "bg-green-500 text-white"
+                                      : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                                    }`}
+                                  title="Present"
+                                >
+                                  <FaCheck />
+                                </motion.button>
+
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    handleAttendance(student.id, "absent")
+                                  }
+                                  className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === "absent"
+                                      ? "bg-red-500 text-white"
+                                      : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                    }`}
+                                  title="Absent"
+                                >
+                                  <FaTimes />
+                                </motion.button>
+
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    handleAttendance(student.id, "holiday")
+                                  }
+                                  className={`p-2 rounded-full transition-colors duration-200 ${attendance[student.id] === "holiday"
+                                      ? "bg-amber-500 text-white"
+                                      : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                                    }`}
+                                  title="Holiday"
+                                >
+                                  <FaUmbrella />
+                                </motion.button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </motion.div>
+
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4"
+                >
+                  {existingAttendance && (
+                    <span className="text-amber-600 dark:text-amber-400 font-medium text-center sm:text-left">
+                      Editing existing attendance for{" "}
+                      {format(new Date(selectedDate), "dd MMM yyyy")}
+                    </span>
+                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={saveAttendance}
+                    className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3 rounded-lg hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200"
+                  >
+                    {existingAttendance
+                      ? "Update Attendance"
+                      : "Save Attendance"}
+                  </motion.button>
+                </motion.div>
+              </AnimatePresence>
+            )}
           </motion.div>
         </div>
-      </motion.div>
-
-      {loading && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/90 flex items-center justify-center backdrop-blur-sm">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full shadow-lg"
-          />
-        </div>
-      )}
-    </div>
+      ) : null}
+    </motion.div>
   );
 };
 
-export default Profile;
+export default Attendance;

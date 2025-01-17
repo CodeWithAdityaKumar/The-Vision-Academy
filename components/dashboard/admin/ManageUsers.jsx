@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { database } from '@/lib/firebase';
 import { ref, onValue, remove, update, off } from 'firebase/database';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import UpdateUserModal from './UpdateUserModal'; // We'll create this component next
+import UpdateUserModal from './UpdateUserModal'; 
 
 export default function ManageUsers() {
     const [users, setUsers] = useState([]);
@@ -128,72 +128,58 @@ export default function ManageUsers() {
                 {loading ? (
                     <div className="text-center py-4">Loading...</div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        User
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Role
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {filterUsers().map((user) => (
-                                    <tr key={user.id}>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center">
-                                                <img
-                                                    src={user.photoURL || '/default-avatar.png'}
-                                                    alt={user.name}
-                                                    className="h-10 w-10 rounded-full"
-                                                />
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">
-                                                        {user.name}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {user.email}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs ${
-                                                user.role === 'admin' 
-                                                    ? 'bg-red-100 text-red-800' 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filterUsers().map((user) => (
+                            <motion.div
+                                key={user.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-600 overflow-hidden"
+                            >
+                                <div className="flex items-center space-x-4">
+                                    <img
+                                        src={user.photoURL || '/default-avatar.png'}
+                                        alt={user.name}
+                                        className="h-16 w-16 rounded-full object-cover"
+                                    />
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {user.name}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-300">
+                                            {user.email}
+                                        </p>
+                                        <div className="mt-2">
+                                            <span className={`px-3 py-1 rounded-full text-xs ${user.role === 'admin'
+                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                                     : user.role === 'teacher'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-green-100 text-green-800'
-                                            }`}>
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                }`}>
                                                 {user.role}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex space-x-4">
-                                                <button
-                                                    onClick={() => handleUpdateClick(user)}
-                                                    className="text-blue-600 hover:text-blue-900"
-                                                >
-                                                    <FaEdit className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(user.id)}
-                                                    className="text-red-600 hover:text-red-900"
-                                                >
-                                                    <FaTrash className="h-5 w-5" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 flex justify-end space-x-3">
+                                    <button
+                                        onClick={() => handleUpdateClick(user)}
+                                        className="flex items-center px-3 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                        <FaEdit className="h-4 w-4 mr-1" />
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(user.id)}
+                                        className="flex items-center px-3 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                                    >
+                                        <FaTrash className="h-4 w-4 mr-1" />
+                                        Delete
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 )}
             </motion.div>

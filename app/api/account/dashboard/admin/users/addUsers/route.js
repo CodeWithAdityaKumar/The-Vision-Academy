@@ -7,7 +7,10 @@ export async function POST(request) {
         const data = await request.json();
         
         // Generate a temporary password
-        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        // const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        const tempPassword = "TVA2026";
+
+
 
         // Create authentication account
         let userCredential;
