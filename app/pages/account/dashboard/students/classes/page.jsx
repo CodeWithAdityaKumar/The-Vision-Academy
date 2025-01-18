@@ -1,10 +1,11 @@
-import Profile from '@/components/dashboard/Profile'
+"use client"
+import ViewClasses from '@/components/dashboard/student/ViewClasses'
 import React from 'react'
 
 const page = () => {
   return (
     <div>
-      <Profile/>
+      <ViewClasses />
     </div>
   )
 }

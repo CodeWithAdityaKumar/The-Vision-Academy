@@ -167,8 +167,8 @@ const ViewTotalAttendance = () => {
     };
 
     const renderCalendar = () => {
-        const currentDate = selectedMonth ?
-            new Date(selectedMonth) :
+        const currentDate = selectedMonth ? 
+            new Date(selectedMonth) : 
             new Date();
         const dates = getMonthDates(currentDate);
         const weeks = [];
@@ -176,7 +176,7 @@ const ViewTotalAttendance = () => {
 
         // Get the starting day of the month
         const firstDay = startOfMonth(currentDate).getDay();
-
+        
         // Add empty cells for days before the first day of the month
         for (let i = 0; i < firstDay; i++) {
             week.push(null);
@@ -216,8 +216,8 @@ const ViewTotalAttendance = () => {
                         week.map((date, dateIndex) => {
                             if (!date) {
                                 return (
-                                    <div
-                                        key={`empty-${weekIndex}-${dateIndex}`}
+                                    <div 
+                                        key={`empty-${weekIndex}-${dateIndex}`} 
                                         className="w-8 h-8 sm:w-10 sm:h-10"
                                     />
                                 );
@@ -225,7 +225,7 @@ const ViewTotalAttendance = () => {
 
                             const status = getAttendanceStatus(date);
                             const isCurrentMonth = isSameMonth(date, currentDate);
-
+                            
                             return (
                                 <motion.div
                                     key={date.toString()}
@@ -243,10 +243,11 @@ const ViewTotalAttendance = () => {
                                         text-gray-800 dark:text-gray-200
                                     `}
                                     data-tooltip-id="date-tooltip"
-                                    data-tooltip-content={`${format(date, 'dd MMM yyyy')} - ${status === null ? 'No Record' :
-                                            status === 'holiday' ? 'Holiday' :
-                                                status ? 'Present' : 'Absent'
-                                        }`}
+                                    data-tooltip-content={`${format(date, 'dd MMM yyyy')} - ${
+                                        status === null ? 'No Record' :
+                                        status === 'holiday' ? 'Holiday' :
+                                        status ? 'Present' : 'Absent'
+                                    }`}
                                 >
                                     <span className="text-xs sm:text-sm font-medium">
                                         {format(date, 'd')}
@@ -261,13 +262,13 @@ const ViewTotalAttendance = () => {
     };
 
     return (
-        <motion.div
+        <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 lg:p-8"
         >
             <div className="max-w-7xl mx-auto">
-                <motion.div
+                <motion.div 
                     initial={{ y: -20 }}
                     animate={{ y: 0 }}
                     className="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8"
