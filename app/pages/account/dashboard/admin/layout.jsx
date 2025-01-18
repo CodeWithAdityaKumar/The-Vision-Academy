@@ -1,60 +1,50 @@
 "use client"
 import FloatingPlusIcon from "@/components/dashboard/admin/FloatingPlusIcon"
 import SideBarMenu from "@/components/dashboard/admin/SideBarMenu"
-// import { useState, useEffect } from 'react'
-// import { useRouter } from 'next/navigation'
-// import { auth, db } from '@/lib/firebase'
-// import { onAuthStateChanged } from 'firebase/auth'
-// import { doc, getDoc } from 'firebase/firestore'
+import { useAuth } from '@/components/AuthProvider';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { ref, onValue } from 'firebase/database';
+import { database } from '@/lib/firebase';
 
 export default function AdminLayout({ children }) {
-    // const [user, setUser] = useState(null)
-    // const [loading, setLoading] = useState(true)
-    // const router = useRouter()
+    const { user } = useAuth();
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
 
-    // useEffect(() => {
-    //     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-    //         if (firebaseUser) {
-    //             // Get additional user data from Firestore
-    //             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-    //             if (userDoc.exists()) {
-    //                 setUser({ ...firebaseUser, ...userDoc.data() })
-    //             }
-    //         } else {
-    //             setUser(null)
-    //         }
-    //         setLoading(false)
-    //     })
+    useEffect(() => {
+        if (!user) {
+            router.push('/pages/account/login');
+            return;
+        }
 
-    //     // Cleanup subscription
-    //     return () => unsubscribe()
-    // }, [])
+        const userRef = ref(database, `users/${user.uid}`);
+        const unsubscribe = onValue(userRef, (snapshot) => {
+            const userData = snapshot.val();
+            if (!userData || userData.role !== 'admin') {
+                router.push('/');
+            }
+            setLoading(false);
+        });
 
-    // useEffect(() => {
-    //     if (!loading && (!user || user.role !== 'admin')) {
-    //         router.push('/pages/account/login')
-    //     }
-    // }, [user, loading, router])
+        return () => unsubscribe();
+    }, [user, router]);
 
-    // if (loading) {
-    //     return <div className="flex items-center justify-center min-h-screen">
-    //         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    //     </div>
-    // }
-
-    // if (!user || user.role !== 'admin') {
-    //     return null
-    // }
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            </div>
+        );
+    }
 
     return (
         <>
             <div className="flex">
-
-            <SideBarMenu />
+                <SideBarMenu />
                 <FloatingPlusIcon />
                 <div className="w-full">
-                    
-            {children}
+                    {children}
                 </div>
             </div>
         </>

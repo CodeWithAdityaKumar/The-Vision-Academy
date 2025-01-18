@@ -1,6 +1,7 @@
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/components/AuthProvider';
 import './globals.css';
+import 'plyr/dist/plyr.css';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
