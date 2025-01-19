@@ -57,7 +57,7 @@ const PopUpNotice = ({
 
     const hidePopup = () => {
         setIsVisible(false);
-        localStorage.setItem(storageKey, Date.now().toString());
+        // localStorage.setItem(storageKey, Date.now().toString());
     };
 
     return (
