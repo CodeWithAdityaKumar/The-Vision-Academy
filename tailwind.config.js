@@ -6,23 +6,24 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: 'class',
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         primary: {
-          50: '#fef2f2',
-          100: '#fee2e2',
+          50: "#fef2f2",
+          100: "#fee2e2",
           // ... other shades
-          600: '#dc2626',
-          700: '#b91c1c',
+          600: "#dc2626",
+          700: "#b91c1c",
         },
       },
     },
   },
   plugins: [
-    require('@tailwindcss/forms')({
-      strategy: 'class', // only generate classes
+    require("@tailwindcss/forms")({
+      strategy: "class", // only generate classes
     }),
+    require("@tailwindcss/line-clamp"),
   ],
-}
+};

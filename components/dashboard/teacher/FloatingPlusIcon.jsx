@@ -38,6 +38,7 @@ const FloatingPlusIcon = () => {
 
     const menuItems = [
         {
+            id: 'profile',
             title: 'Profile',
             icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -45,11 +46,14 @@ const FloatingPlusIcon = () => {
             url: '/pages/account/dashboard/teachers'
         },
         {
-            title: 'Attendance',
+            title: 'Classes',
             icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
             </svg>,
-            url: '/pages/account/dashboard/teachers/attendance/students'
+            subItems: [
+                { title: 'Create Class', url: '/pages/account/dashboard/teachers/classes/create' },
+                { title: 'Manage Class', url: '/pages/account/dashboard/teachers/classes/manage' }
+            ]
         },
         {
             title: 'Notes And Books',
@@ -62,15 +66,25 @@ const FloatingPlusIcon = () => {
             ]
         },
         {
-            title: 'Classes',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            title: 'Solve Doubts',
+            icon: <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+            >
+                <path d="M0 0h24v24H0V0z" fill="none" />
+                <path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z" />
             </svg>,
-            subItems: [
-                { title: 'Create Class', url: '/pages/account/dashboard/teachers/classes/create' },
-                { title: 'Manage Class', url: '/pages/account/dashboard/teachers/classes/manage' }
-            ]
-        }
+            url: '/pages/account/dashboard/teachers/solveDoubts'
+        },
+        {
+            title: 'Attendance',
+            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+            </svg>,
+            url: '/pages/account/dashboard/teachers/attendance/students'
+        },
     ];
 
     return (
