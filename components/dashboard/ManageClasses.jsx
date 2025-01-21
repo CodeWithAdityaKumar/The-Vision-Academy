@@ -41,9 +41,9 @@ function EditClassForm({ classData, onSave, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        <div>
+    <form onSubmit={handleSubmit} className="flex flex-col space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Title</label>
           <input
             type="text"
@@ -55,7 +55,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           />
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Subject</label>
           <input
             type="text"
@@ -67,7 +67,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           />
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Target Class</label>
           <select
             name="targetClass"
@@ -82,7 +82,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           </select>
         </div>
 
-        <div className="col-span-2">
+        <div className="flex flex-col sm:col-span-2">
           <label className={labelClassName}>Description</label>
           <textarea
             name="description"
@@ -93,7 +93,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           />
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Date</label>
           <input
             type="date"
@@ -105,7 +105,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           />
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Time</label>
           <input
             type="time"
@@ -117,7 +117,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           />
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Status</label>
           <select
             name="status"
@@ -131,7 +131,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           </select>
         </div>
 
-        <div>
+        <div className="flex flex-col flex-1">
           <label className={labelClassName}>Meeting Link</label>
           <input
             type="url"
@@ -144,12 +144,12 @@ function EditClassForm({ classData, onSave, onCancel }) {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:space-x-4 pt-4 sm:pt-6">
+      <div className="flex flex-col sm:flex-row gap-3">
         <motion.button
           type="submit"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`${buttonClassName} w-full sm:w-auto`}
+          className={`flex-1 ${buttonClassName}`}
         >
           Save Changes
         </motion.button>
@@ -158,7 +158,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           onClick={onCancel}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300"
+          className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300"
         >
           Cancel
         </motion.button>
@@ -284,7 +284,7 @@ export default function ManageClasses() {
         >
           {/* Add Search, Filter, and Sort Controls */}
           <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div className="w-full">
+            <div className="flex flex-col w-full">
               <input
                 type="text"
                 placeholder="Search classes..."
@@ -293,11 +293,11 @@ export default function ManageClasses() {
                 className={inputClassName}
               />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className={`${inputClassName}`}
+                className={`${inputClassName} flex-1`}
               >
                 <option value="all">All Status</option>
                 <option value="upcoming">Upcoming</option>
@@ -307,7 +307,7 @@ export default function ManageClasses() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className={`${inputClassName}`}
+                className={`${inputClassName} flex-1`}
               >
                 <option value="date">Sort by Date</option>
                 <option value="title">Sort by Title</option>
@@ -315,7 +315,7 @@ export default function ManageClasses() {
               </select>
               <button
                 onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors col-span-2 sm:col-span-1"
+                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
