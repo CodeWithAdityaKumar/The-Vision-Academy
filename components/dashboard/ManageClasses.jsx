@@ -8,7 +8,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Add styled className constants
-const inputClassName = "mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white hover:shadow-md focus:shadow-lg";
+const inputClassName = "mt-1 block w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 transition-all duration-200 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white hover:shadow-md focus:shadow-lg";
 const labelClassName = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
 const buttonClassName = "px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300";
 
@@ -41,8 +41,8 @@ function EditClassForm({ classData, onSave, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div>
           <label className={labelClassName}>Title</label>
           <input
@@ -144,12 +144,12 @@ function EditClassForm({ classData, onSave, onCancel }) {
         </div>
       </div>
 
-      <div className="flex space-x-4 pt-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:space-x-4 pt-4 sm:pt-6">
         <motion.button
           type="submit"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`flex-1 ${buttonClassName}`}
+          className={`${buttonClassName} w-full sm:w-auto`}
         >
           Save Changes
         </motion.button>
@@ -158,7 +158,7 @@ function EditClassForm({ classData, onSave, onCancel }) {
           onClick={onCancel}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300"
+          className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300"
         >
           Cancel
         </motion.button>
@@ -274,17 +274,17 @@ export default function ManageClasses() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 py-6 sm:py-12 px-2 sm:px-4">
       <ToastContainer position="top-right" theme="colored" />
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/90 rounded-2xl shadow-2xl p-6"
+          className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/90 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl p-4 sm:p-6"
         >
           {/* Add Search, Filter, and Sort Controls */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
+          <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="w-full">
               <input
                 type="text"
                 placeholder="Search classes..."
@@ -293,11 +293,11 @@ export default function ManageClasses() {
                 className={inputClassName}
               />
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className={`${inputClassName} w-full md:w-auto`}
+                className={`${inputClassName}`}
               >
                 <option value="all">All Status</option>
                 <option value="upcoming">Upcoming</option>
@@ -307,7 +307,7 @@ export default function ManageClasses() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className={`${inputClassName} w-full md:w-auto`}
+                className={`${inputClassName}`}
               >
                 <option value="date">Sort by Date</option>
                 <option value="title">Sort by Title</option>
@@ -315,7 +315,7 @@ export default function ManageClasses() {
               </select>
               <button
                 onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors col-span-2 sm:col-span-1"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
@@ -323,13 +323,7 @@ export default function ManageClasses() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.div
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid grid-cols-1 gap-6"
-            >
+            <motion.div layout className="grid grid-cols-1 gap-4 sm:gap-6">
               {filterAndSortClasses().map((classItem) => (
                 <motion.div
                   key={classItem.id}
@@ -337,7 +331,7 @@ export default function ManageClasses() {
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300"
                 >
                   {editingClass === classItem.id ? (
                     <EditClassForm
@@ -346,9 +340,9 @@ export default function ManageClasses() {
                       onCancel={() => setEditingClass(null)}
                     />
                   ) : (
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1 flex flex-col md:flex-row gap-6">
-                        <div className="relative h-40 md:h-32 md:w-32 rounded-lg overflow-hidden">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                      <div className="flex-1 flex flex-col sm:flex-row gap-4 sm:gap-6">
+                        <div className="relative h-32 w-full sm:w-32 rounded-lg overflow-hidden">
                           <Image
                             src={classItem.thumbnail || '/images/default-class-thumbnail.jpg'}
                             alt={classItem.title}
@@ -383,12 +377,12 @@ export default function ManageClasses() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex md:flex-col justify-end gap-3">
+                      <div className="flex sm:flex-col gap-2 sm:gap-3 mt-2 sm:mt-0">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setEditingClass(classItem.id)}
-                          className="flex-1 md:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           Edit
                         </motion.button>
@@ -396,7 +390,7 @@ export default function ManageClasses() {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleDelete(classItem.id)}
-                          className="flex-1 md:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm sm:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
                           Delete
                         </motion.button>
