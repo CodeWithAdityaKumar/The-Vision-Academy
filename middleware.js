@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 export async function middleware(request) {
-  // Get the Firebase auth token from cookies
   const token = request.cookies.get('firebase-token');
   const path = request.nextUrl.pathname;
 
@@ -19,10 +18,3 @@ export async function middleware(request) {
 
   return NextResponse.next();
 }
-
-// export const config = {
-//   matcher: [
-//     '/pages/live-classes/:path*',
-//     '/pages/notes-books/:path*',
-//   ],
-// };

@@ -23,16 +23,16 @@ const DashboardLayout = ({ children }) => {
                         
                         // Verify user has access to current path
                         const isAdminPath = currentPath.includes('/admin')
-                        const isTeacherPath = currentPath.includes('/teachers')
-                        const isStudentPath = currentPath.includes('/students')
+                        const isTeacherPath = currentPath.includes('/teacher')
+                        const isStudentPath = currentPath.includes('/student')
 
                         // Redirect if user doesn't have appropriate role
                         if (isAdminPath && userData.role !== 'admin') {
                             router.push('/pages/account/dashboard/' + userData.role)
                         } else if (isTeacherPath && userData.role !== 'teacher') {
-                            router.push('/pages/account/dashboard/' + userData.role + 's')
+                            router.push('/pages/account/dashboard/' + userData.role)
                         } else if (isStudentPath && userData.role !== 'student') {
-                            router.push('/pages/account/dashboard/' + userData.role + 's')
+                            router.push('/pages/account/dashboard/' + userData.role)
                         }
                     } else {
                         router.push('/')

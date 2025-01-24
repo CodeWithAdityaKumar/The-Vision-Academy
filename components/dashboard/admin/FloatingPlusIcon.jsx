@@ -75,17 +75,19 @@ const FloatingPlusIcon = () => {
       url: "/pages/account/dashboard/admin/attendance/students",
     },
     {
-      title: 'Solve Doubts',
-      icon: <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path d="M0 0h24v24H0V0z" fill="none" />
-        <path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z" />
-      </svg>,
-      url: '/pages/account/dashboard/admin/solveDoubts'
+      title: "Solve Doubts",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path d="M0 0h24v24H0V0z" fill="none" />
+          <path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z" />
+        </svg>
+      ),
+      url: "/pages/account/dashboard/admin/solveDoubts",
     },
     {
       title: "Student Payment",
@@ -105,6 +107,35 @@ const FloatingPlusIcon = () => {
         </svg>
       ),
       url: "/pages/account/dashboard/admin/payments/students",
+    },
+    {
+      title: "Create",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="24px"
+          width="24px"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M0 0h24v24H0V0z" fill="none" />
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+        </svg>
+      ),
+      subItems: [
+        {
+          title: "PopUp Notice",
+          url: "/pages/account/dashboard/admin/create/createPopUpNotice",
+        },
+        {
+          title: "Classes",
+          url: "/pages/account/dashboard/admin/create/createClasses",
+        },
+        {
+          title: "Subjects",
+          url: "/pages/account/dashboard/admin/create/createSubject",
+        },
+      ],
     },
     {
       title: "Users",
@@ -177,8 +208,9 @@ const FloatingPlusIcon = () => {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
+          height="24px"
+          width="24px"
+          viewBox="0 0 24 24"
           fill="currentColor"
         >
           <path d="M0 0h24v24H0V0z" fill="none" />
@@ -196,14 +228,14 @@ const FloatingPlusIcon = () => {
         },
       ],
     },
-
     {
       title: "Notices",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
+          height="24px"
+          width="24px"
+          viewBox="0 0 24 24"
           fill="currentColor"
         >
           <g>
@@ -218,12 +250,16 @@ const FloatingPlusIcon = () => {
       ),
       subItems: [
         {
-          title: "Create",
-          url: "/pages/account/dashboard/admin/notices/create",
+          title: "Public Notice",
+          url: "/pages/account/dashboard/admin/notices/publicNotice",
         },
         {
-          title: "Manage",
-          url: "/pages/account/dashboard/admin/notices/manage",
+          title: "Class Notice",
+          url: "/pages/account/dashboard/admin/notices/classesNotice",
+        },
+        {
+          title: "Teacher Notice",
+          url: "/pages/account/dashboard/admin/notices/staffsNotice",
         },
       ],
     },

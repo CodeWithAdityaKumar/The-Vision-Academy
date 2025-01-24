@@ -31,7 +31,6 @@ export default function CreateNotice() {
       });
 
       toast.success("Notice created successfully!");
-      router.push("/pages/notices");
     } catch (error) {
       console.error("Error creating notice:", error);
       toast.error("Failed to create notice");
