@@ -217,10 +217,11 @@ const Scanner = forwardRef(({
       const defaultConfig = {
         qrbox: { width: 250, height: 250 },
         fps: 5,
-        disableFlip: true,
-        rememberLastUsedCamera: true,
-        aspectRatio: 1,
-        formatsToSupport: [0] // Only support QR codes (format 0)
+        // disableFlip: true,
+        // rememberLastUsedCamera: true,
+        // aspectRatio: 1,
+        // formatsToSupport: [0] 
+        // Only support QR codes (format 0)
       };
       
       // Add camera ID if we have one
