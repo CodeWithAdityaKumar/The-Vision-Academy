@@ -113,6 +113,8 @@ const Scanner = forwardRef(({
   // Scanner states
   const [isActive, setIsActive] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Refs
   const scannerRef = useRef(null);
@@ -136,7 +138,11 @@ const Scanner = forwardRef(({
     
     // Only initialize if active
     if (active) {
-      initScanner();
+      checkCameraPermission().then(hasPermission => {
+        if (hasPermission) {
+          initScanner();
+        }
+      });
     }
     
     // Complete cleanup on unmount
@@ -157,12 +163,60 @@ const Scanner = forwardRef(({
   // Handle scanner activation changes
   useEffect(() => {
     if (active && !isActive && mountedRef.current) {
-      initScanner();
+      if (!permissionError) {
+        initScanner();
+      }
     } else if (!active && isActive) {
       cleanupScanner();
     }
-  }, [active, isActive]);
+  }, [active, isActive, permissionError]);
   
+  // Check if camera permissions are granted
+  const checkCameraPermission = async () => {
+    try {
+      // Check if navigator.mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access is not supported by this browser');
+      }
+
+      // Request camera permission
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      setPermissionError(false);
+      setErrorMessage('');
+      return true;
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      
+      let message = 'Camera access denied. ';
+      
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        message += 'Please enable camera permissions in your browser/device settings.';
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          message += ' On iOS, go to Settings > Safari > Camera and select "Allow".';
+        } else if (/Android/.test(navigator.userAgent)) {
+          message += ' On Android, go to Settings > Apps > Browser > Permissions > Camera.';
+        }
+      } else if (error.name === 'NotFoundError') {
+        message = 'No camera detected on this device.';
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        message = 'Camera is in use by another application.';
+      } else {
+        message = `Camera error: ${error.message || 'Unknown error'}`;
+      }
+      
+      setPermissionError(true);
+      setErrorMessage(message);
+      setHasError(true);
+      
+      if (onError) {
+        onError(error);
+      }
+      
+      return false;
+    }
+  };
+
   // Thorough cleanup of all scanner elements
   const fullCleanup = () => {
     // Standard scanner cleanup
@@ -184,7 +238,7 @@ const Scanner = forwardRef(({
   };
   
   // Initialize scanner
-  const initScanner = () => {
+  const initScanner = async () => {
     // Prevent initialization if already have a scanner or component unmounted
     if (scannerRef.current || !mountedRef.current) {
       return;
@@ -194,6 +248,12 @@ const Scanner = forwardRef(({
     fullCleanup();
     
     try {
+      // Check camera permission before initializing
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) {
+        return;
+      }
+      
       // Make sure container exists
       const container = document.getElementById(uniqueId.current);
       if (!container) {
@@ -330,6 +390,18 @@ const Scanner = forwardRef(({
     }
   };
   
+  // Retry after permission error
+  const retryAfterPermissionError = async () => {
+    setHasError(false);
+    setPermissionError(false);
+    setErrorMessage('');
+    
+    const hasPermission = await checkCameraPermission();
+    if (hasPermission) {
+      initScanner();
+    }
+  };
+  
   // Public method to restart scanning
   const restart = () => {
     cleanupScanner();
@@ -347,7 +419,8 @@ const Scanner = forwardRef(({
     restart,
     stop: cleanupScanner,
     isActive: () => isActive,
-    hasError: () => hasError
+    hasError: () => hasError,
+    retryAfterPermissionError
   }));
   
   // Controlled height container with unique ID
@@ -361,6 +434,23 @@ const Scanner = forwardRef(({
       {!isActive && active && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-black/30">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+        </div>
+      )}
+      
+      {/* Permission Error UI */}
+      {permissionError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-lg p-4 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Camera Access Required</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{errorMessage}</p>
+          <button 
+            onClick={retryAfterPermissionError}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Retry Camera Access
+          </button>
         </div>
       )}
     </div>
