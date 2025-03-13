@@ -1,0 +1,591 @@
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
+import { database } from '@/lib/firebase';
+import { ref, get } from 'firebase/database';
+import toast, { Toaster } from 'react-hot-toast';
+import Scanner from './Scanner';
+import { FaTrash, FaDoorOpen, FaDoorClosed } from 'react-icons/fa';
+
+const QrScanner = () => {
+  // Core states
+  const [scanResult, setScanResult] = useState(null);
+  const [studentData, setStudentData] = useState(null);
+  const [duplicateEntry, setDuplicateEntry] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [scannedEntries, setScannedEntries] = useState([]);
+  const [countdown, setCountdown] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+  const [scannerActive, setScannerActive] = useState(true);
+  
+  // Refs
+  const scannerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+  const processingRef = useRef(false); // Track if a scan is currently being processed
+  const lastScannedRef = useRef(null); // Track the last scanned code to prevent duplicates
+  
+  // ===== INITIALIZATION & DATA LOADING =====
+  
+  // Only try to load entries once on mount
+  useEffect(() => {
+    loadEntriesFromLocalStorage();
+    
+    return () => {
+      if (countdownTimerRef.current) {
+        clearTimeout(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Load entries function
+  const loadEntriesFromLocalStorage = () => {
+    try {
+      const savedEntries = localStorage.getItem('scannedEntries');
+      if (savedEntries) {
+        const parsedEntries = JSON.parse(savedEntries);
+        if (Array.isArray(parsedEntries) && parsedEntries.length > 0) {
+          console.log(`Loaded ${parsedEntries.length} entries from localStorage`);
+          setScannedEntries(parsedEntries);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading entries from localStorage:', err);
+    }
+  };
+  
+  // Save entries to localStorage when they change
+  useEffect(() => {
+    if (scannedEntries.length > 0) {
+      try {
+        localStorage.setItem('scannedEntries', JSON.stringify(scannedEntries));
+      } catch (err) {
+        console.error('Error saving to localStorage:', err);
+      }
+    }
+  }, [scannedEntries]);
+  
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown <= 0) {
+      resetScanner();
+      return;
+    }
+    
+    countdownTimerRef.current = setTimeout(() => {
+      setCountdown(prev => prev - 1);
+    }, 1000);
+    
+    return () => {
+      if (countdownTimerRef.current) {
+        clearTimeout(countdownTimerRef.current);
+      }
+    };
+  }, [countdown]);
+  
+  // ===== HANDLERS =====
+  
+  // Handle successful scan with debouncing to prevent duplicates
+  const handleScanSuccess = async (decodedText) => {
+    // Prevent processing duplicate scans in quick succession
+    if (processingRef.current) {
+      console.log('Scan already in process, ignoring');
+      return;
+    }
+    
+    // Check if this is the same code as the last scan within a short time period
+    const now = Date.now();
+    if (lastScannedRef.current && 
+        lastScannedRef.current.text === decodedText && 
+        now - lastScannedRef.current.time < 3000) {
+      console.log('Duplicate scan detected, ignoring');
+      return;
+    }
+    
+    // Mark as processing and update last scanned
+    processingRef.current = true;
+    lastScannedRef.current = { text: decodedText, time: now };
+    
+    // Update UI state
+    setScanResult(decodedText);
+    setScannerActive(false);
+    
+    try {
+      // Parse QR data
+      const qrData = JSON.parse(decodedText);
+      
+      // Validate required fields
+      if (!qrData || !qrData.uid) {
+        toast.error('Invalid QR code format');
+        setCountdown(3);
+        processingRef.current = false;
+        return;
+      }
+      
+      // Process student verification
+      await verifyStudent(qrData.uid);
+    } catch (error) {
+      console.error('Error processing scan:', error);
+      toast.error('Invalid QR code format');
+      setCountdown(3);
+    } finally {
+      // Clear processing lock after a short delay to prevent duplicates
+      setTimeout(() => {
+        processingRef.current = false;
+      }, 1500);
+    }
+  };
+  
+  // Handle scan error
+  const handleScanError = (error) => {
+    console.warn('Scanner error:', error);
+    setCameraError('Camera access error. Please check permissions.');
+  };
+  
+  // Improved reset scanner function
+  const resetScanner = () => {
+    // Clear any active timers
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    
+    // Reset states
+    setScanResult(null);
+    setStudentData(null);
+    setDuplicateEntry(null);
+    setCountdown(null);
+    setCameraError(null);
+    
+    // Give DOM time to update before reinitializing
+    setTimeout(() => {
+      // Restart scanner using ref method
+      if (scannerRef.current) {
+        scannerRef.current.restart();
+      }
+      setScannerActive(true);
+    }, 500);
+  };
+  
+  // More thorough duplicate check function
+  const checkExistingEntry = (uid) => {
+    if (!scannedEntries || !scannedEntries.length) return null;
+    
+    // Check for same student on same day - use current date to ensure we're checking against today
+    const today = new Date().toLocaleDateString();
+    
+    console.log(`Checking for existing entry: uid=${uid}, date=${today}`);
+    console.log(`Total entries: ${scannedEntries.length}`);
+    
+    // Find matching entry
+    const existingEntry = scannedEntries.find(entry => {
+      const isMatch = entry.uid === uid && entry.date === today;
+      if (isMatch) {
+        console.log(`Found matching entry: id=${entry.id}, name=${entry.name}, entry=${entry.entry}, exit=${entry.exit}`);
+      }
+      return isMatch;
+    });
+    
+    return existingEntry || null;
+  };
+  
+  // Verify student with improved duplicate handling
+  const verifyStudent = async (uid) => {
+    setLoading(true);
+    setDuplicateEntry(null);
+    setStudentData(null);
+    
+    try {
+      // PRE-CHECK: Check for any existing entry BEFORE hitting the database
+      const existingEntry = checkExistingEntry(uid);
+      
+      // Handle existing entries first - this shouldn't hit the database at all
+      if (existingEntry) {
+        console.log(`Found existing entry with id ${existingEntry.id}`);
+        
+        // Case 1: Entry exists and both entry and exit are marked - no more scans allowed
+        if (existingEntry.entry && existingEntry.exit) {
+          console.log(`User ${existingEntry.name} already has entry & exit marked`);
+          setDuplicateEntry(existingEntry);
+          toast.error(`${existingEntry.name} has already completed entry and exit for today`);
+          setLoading(false);
+          setCountdown(5);
+          return;
+        }
+        
+        // Case 2: Entry exists but exit is not marked - mark exit
+        if (existingEntry.entry && !existingEntry.exit) {
+          console.log(`User ${existingEntry.name} has entry but no exit - marking exit`);
+          
+          // Clone with JSON parse/stringify to avoid reference issues
+          const updatedEntry = JSON.parse(JSON.stringify({
+            ...existingEntry,
+            exit: true,
+            exitTime: new Date().toLocaleTimeString()
+          }));
+          
+          // Update the entry with deep comparison
+          setScannedEntries(prev => 
+            prev.map(entry => 
+              entry.id === existingEntry.id ? updatedEntry : entry
+            )
+          );
+          
+          setStudentData({...updatedEntry, isExit: true});
+          toast.success(`Exit recorded for: ${existingEntry.name}`);
+          setLoading(false);
+          setCountdown(5);
+          return;
+        }
+      }
+      
+      // Only hit the database if we haven't found an existing entry
+      try {
+        // Get student data from Firebase
+        const studentRef = ref(database, `users/${uid}`);
+        const snapshot = await get(studentRef);
+        
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          
+          // EXTRA SAFETY: Check AGAIN for duplicates after fetching data
+          // This handles the edge case where a scan might happen while we were fetching data
+          const doubleCheckEntry = checkExistingEntry(uid);
+          
+          if (doubleCheckEntry) {
+            console.log(`Found entry during double-check for ${data.name}`);
+            
+            // Handle based on entry/exit status
+            if (doubleCheckEntry.exit) {
+              // Both entry and exit already marked
+              setDuplicateEntry(doubleCheckEntry);
+              toast.error(`${doubleCheckEntry.name} has already completed entry and exit for today`);
+            } else {
+              // Mark exit on this existing entry
+              const updatedEntry = JSON.parse(JSON.stringify({
+                ...doubleCheckEntry,
+                exit: true,
+                exitTime: new Date().toLocaleTimeString()
+              }));
+              
+              setScannedEntries(prev => 
+                prev.map(entry => 
+                  entry.id === doubleCheckEntry.id ? updatedEntry : entry
+                )
+              );
+              
+              setStudentData({...updatedEntry, isExit: true});
+              toast.success(`Exit recorded for: ${doubleCheckEntry.name}`);
+            }
+          } else {
+            // No duplicate found even after the second check, safe to create new entry
+            console.log(`Creating new entry for ${data.name}`);
+            const newEntry = recordStudentEntry(uid, data);
+            setStudentData({...data, isEntry: true});
+            toast.success(`Entry recorded for: ${data.name}`);
+          }
+        } else {
+          toast.error('Student not found in database');
+        }
+      } catch (firebaseError) {
+        console.error('Firebase error:', firebaseError);
+        toast.error('Database connection error. Please try again.');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error('Error during verification');
+    } finally {
+      setLoading(false);
+      setCountdown(5);
+    }
+  };
+  
+  // Record entry with triple-check for duplicates
+  const recordStudentEntry = (uid, student) => {
+    const now = new Date();
+    const today = now.toLocaleDateString();
+    const uniqueId = `${uid}-${now.toISOString()}`;
+    
+    // Final check before creating entry
+    const finalDuplicateCheck = scannedEntries.some(entry => 
+      entry.uid === uid && entry.date === today
+    );
+    
+    if (finalDuplicateCheck) {
+      console.log(`CRITICAL: Prevented duplicate creation at final check for ${student.name}`);
+      
+      // Find and return the existing entry instead of creating a new one
+      const existingEntry = scannedEntries.find(entry => 
+        entry.uid === uid && entry.date === today
+      );
+      
+      return existingEntry;
+    }
+    
+    // Safe to create new entry
+    const entry = {
+      id: uniqueId,
+      uid,
+      name: student.name,
+      class: student.class || '',
+      rollNumber: student.rollNumber || '',
+      photoURL: student.photoURL || student.photoUrl || '',
+      timestamp: now.toISOString(),
+      date: today,
+      time: now.toLocaleTimeString(),
+      // Entry/Exit status fields
+      entry: true,
+      exit: false,
+      entryTime: now.toLocaleTimeString(),
+      exitTime: null,
+    };
+    
+    // Use function form with triple-check to ensure we have the latest state
+    setScannedEntries(prev => {
+      // Check one more time for duplicates using the latest state
+      const duplicate = prev.find(e => e.uid === uid && e.date === today);
+      
+      if (duplicate) {
+        console.log(`PREVENTED duplicate entry creation at setState for ${student.name}`);
+        return prev; // Don't add duplicate
+      }
+      
+      return [entry, ...prev]; // Add new entry
+    });
+    
+    return entry;
+  };
+  
+  // Delete a specific entry
+  const deleteEntry = (entryId) => {
+    setScannedEntries(prev => prev.filter(entry => entry.id !== entryId));
+    toast.success('Entry deleted');
+  };
+  
+  // Delete all entries
+  const deleteAllEntries = () => {
+    setScannedEntries([]);
+    localStorage.removeItem('scannedEntries');
+    toast.success('All entries deleted');
+  };
+  
+  // Render UI
+  return (
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <Toaster position="top-center" />
+      <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">QR Code Scanner</h2>
+      
+      {/* Scanner Section with fixed height container */}
+      <div className="w-full max-w-md mx-auto mb-8">
+        {!scanResult ? (
+          <>
+            {cameraError ? (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-center mb-4">
+                <p className="text-red-600 dark:text-red-400 mb-2">{cameraError}</p>
+                <button 
+                  onClick={resetScanner}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="relative rounded-lg overflow-hidden shadow-inner" style={{ height: '320px' }}>
+                <Scanner
+                  onScan={handleScanSuccess}
+                  onError={handleScanError}
+                  active={scannerActive}
+                  ref={scannerRef}
+                  config={{ 
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                  }}
+                />
+              </div>
+            )}
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+              Position a QR code in the frame to scan
+            </p>
+          </>
+        ) : (
+          <>
+            {/* Scan Result Display */}
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600"></div>
+              </div>
+            ) : (
+              <>
+                {studentData ? (
+                  <div className={`p-4 rounded-lg mb-4 w-full ${
+                    studentData.isExit 
+                      ? "bg-blue-50 dark:bg-blue-900/30" 
+                      : "bg-green-50 dark:bg-green-900/30"
+                  }`}>
+                    <div className="flex items-center">
+                      <div className="mr-3">
+                        {studentData.isExit ? 
+                          <FaDoorClosed className="h-6 w-6 text-blue-600 dark:text-blue-400" /> :
+                          <FaDoorOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        }
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-xl mb-1">{studentData.name}</h3>
+                        {studentData.class && <p>Class: {studentData.class}</p>}
+                        {studentData.rollNumber && <p>Roll Number: {studentData.rollNumber}</p>}
+                        <p className="mt-2 font-medium">
+                          {studentData.isExit ? 
+                            <span className="text-blue-600 dark:text-blue-400">Exit recorded ✓</span> : 
+                            <span className="text-green-600 dark:text-green-400">Entry recorded ✓</span>}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : duplicateEntry ? (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg mb-4 w-full">
+                    <div className="flex items-center">
+                      <div className="mr-3">
+                        <svg className="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-xl mb-1">{duplicateEntry.name}</h3>
+                        {duplicateEntry.class && <p>Class: {duplicateEntry.class}</p>}
+                        {duplicateEntry.rollNumber && <p>Roll Number: {duplicateEntry.rollNumber}</p>}
+                        <p className="mt-2 text-yellow-600 dark:text-yellow-400">
+                          Entry and exit already completed for today
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mb-4 w-full">
+                    <p className="text-red-600 dark:text-red-400">Student not found in database</p>
+                  </div>
+                )}
+                
+                {/* Auto-reset countdown timer */}
+                {countdown !== null && (
+                  <div className="text-center">
+                    <div className="inline-block bg-blue-600 text-white rounded-full h-10 w-10 flex items-center justify-center text-lg font-bold">
+                      {countdown}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                      Scanning again in {countdown} second{countdown !== 1 ? 's' : ''}...
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Scan History Section - Redesigned to match ManageUsers.jsx */}
+      <div className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold dark:text-white">Scan History</h3>
+          <div className="flex items-center">
+            <span className="mr-2 text-sm text-gray-500 dark:text-gray-400">
+              {scannedEntries.length} {scannedEntries.length === 1 ? 'entry' : 'entries'}
+            </span>
+            {scannedEntries.length > 0 && (
+              <button 
+                onClick={deleteAllEntries}
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete All
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {scannedEntries.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-10 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            No scan history yet. Scan a student QR code to record an entry.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scannedEntries.map(entry => (
+              <div
+                key={entry.id}
+                className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-600 overflow-hidden"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="h-16 w-16 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                    {entry.photoURL ? (
+                      <img 
+                        src={entry.photoURL}
+                        alt={entry.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // If image fails to load, replace with avatar
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          e.target.parentNode.innerHTML = `
+                            <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                          `;
+                        }}
+                      />
+                    ) : (
+                      <svg className="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {entry.name}
+                    </h3>
+                    <div className="text-sm">
+                      {entry.rollNumber && (
+                        <p className="text-gray-500 dark:text-gray-300">
+                          Roll No: {entry.rollNumber}
+                        </p>
+                      )}
+                      {entry.class && (
+                        <p className="text-gray-500 dark:text-gray-300">
+                          Class: {entry.class}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex items-center">
+                        <FaDoorOpen className="mr-1" size={10} /> Entry: {entry.entryTime}
+                      </span>
+                      {entry.exit && (
+                        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 flex items-center">
+                          <FaDoorClosed className="mr-1" size={10} /> Exit: {entry.exitTime}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                  <div>
+                    <span>{entry.date}</span>
+                  </div>
+                  <button
+                    onClick={() => deleteEntry(entry.id)}
+                    className="flex items-center px-3 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                    aria-label="Delete entry"
+                  >
+                    <FaTrash className="h-4 w-4 mr-1" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default QrScanner;
